@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { safeNextPath } from "@/lib/url";
 
@@ -23,9 +22,9 @@ export function GitHubSignIn({ configured }: { configured: boolean }) {
 
   if (!configured) {
     return (
-      <p className="rounded-md border border-line bg-surface-sunken p-4 text-sm text-muted">
+      <p className="max-w-sm rounded-badge bg-plum px-5 py-4 text-sm text-mist">
         Authentication is not configured yet. Add your Supabase URL and publishable key to{" "}
-        <code className="font-mono text-ink">.env.local</code> and enable the GitHub provider in
+        <code className="font-mono text-paper">.env.local</code> and enable the GitHub provider in
         Supabase. See the README for setup steps.
       </p>
     );
@@ -53,12 +52,17 @@ export function GitHubSignIn({ configured }: { configured: boolean }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <Button size="lg" onClick={signIn} disabled={pending} className="w-full">
+    <div className="flex w-full flex-col items-center gap-3">
+      <button
+        type="button"
+        onClick={signIn}
+        disabled={pending}
+        className="inline-flex h-14 w-full max-w-[280px] items-center justify-center gap-2.5 rounded-full bg-terracotta px-8 text-base font-bold text-ink ring-2 ring-terracotta/30 ring-offset-4 ring-offset-ink transition-transform duration-300 ease-spring hover:bg-cream hover:text-ink motion-safe:hover:-translate-y-0.5 disabled:opacity-60"
+      >
         <GitHubIcon />
         {pending ? "Redirecting to GitHub…" : "Continue with GitHub"}
-      </Button>
-      {error && <p className="text-center text-sm text-danger">{error}</p>}
+      </button>
+      {error && <p className="text-center text-sm text-cream">{error}</p>}
     </div>
   );
 }

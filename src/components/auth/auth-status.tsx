@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/supabase/server";
+import { AccountMenu } from "./account-menu";
 
 /** Header account area. Reads the session, so render it inside `<Suspense>`. */
 export async function AuthStatus() {
@@ -9,40 +9,27 @@ export async function AuthStatus() {
 
   if (!profile) {
     return (
-      <Link href="/login" className={buttonStyles({ size: "sm" })}>
-        Sign in
-      </Link>
+      <div className="flex items-center gap-6">
+        <Link href="/login" className="hidden py-2.5 text-base font-medium text-ink sm:inline">
+          Login
+        </Link>
+        <Link href="/login" className={buttonStyles({ size: "md" })}>
+          Get started
+        </Link>
+      </div>
     );
   }
 
-  const name = profile.display_name ?? profile.username ?? "Account";
-
   return (
-    <div className="flex items-center gap-2">
-      {profile.avatar_url ? (
-        <Image
-          src={profile.avatar_url}
-          alt=""
-          width={32}
-          height={32}
-          unoptimized
-          className="size-8 rounded-full border border-line"
-        />
-      ) : (
-        <span className="grid size-8 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent-ink">
-          {name.charAt(0).toUpperCase()}
-        </span>
-      )}
-      <span className="hidden max-w-32 truncate text-sm font-medium lg:inline">{name}</span>
-      <form action="/auth/sign-out" method="post">
-        <button type="submit" className={buttonStyles({ variant: "ghost", size: "sm" })}>
-          Sign out
-        </button>
-      </form>
-    </div>
+    <AccountMenu
+      githubLogin={profile.githubLogin}
+      displayName={profile.display_name ?? profile.username ?? "Account"}
+      avatarUrl={profile.avatar_url}
+      walletLinked={profile.walletLinked}
+    />
   );
 }
 
 export function AuthStatusFallback() {
-  return <span className="h-8 w-20 animate-pulse rounded-md bg-surface-sunken" aria-hidden />;
+  return <span className="h-11 w-40 animate-pulse rounded-full bg-mist" aria-hidden />;
 }

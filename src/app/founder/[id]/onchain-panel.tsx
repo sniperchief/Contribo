@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { erc20Abi, getAddress, isAddress, parseUnits, zeroAddress, zeroHash, type Address, type Hex } from "viem";
-import { useConfig, useConnection } from "wagmi";
+import { useConfig, useAccount } from "wagmi";
 import { getBalance, readContract, simulateContract, writeContract } from "wagmi/actions";
 import { confirmProjectRegistration, syncApprover } from "@/app/founder/actions";
 import { TxStatus } from "@/components/tx/tx-status";
 import { useContractTx } from "@/components/tx/use-contract-tx";
+import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Input } from "@/components/ui/field";
@@ -41,13 +42,29 @@ type Props = {
 const rewards = contriboRewards!;
 
 function WalletGuard({ verifiedWallet, expected }: { verifiedWallet: string | null; expected?: string }) {
-  const { address } = useConnection();
+  const { address } = useAccount();
   const target = expected ?? verifiedWallet;
+  const note = "rounded-badge bg-cream px-5 py-3.5 text-sm text-graphite";
   if (!verifiedWallet) {
-    return <p className="text-sm text-warning">Link and verify your wallet in the dashboard before sending transactions.</p>;
+    return (
+      <p className={note}>
+        Link and verify your wallet on your{" "}
+        <a href="/profile#wallet" className="font-medium underline underline-offset-2">
+          profile
+        </a>{" "}
+        before sending transactions.
+      </p>
+    );
   }
   if (target && address?.toLowerCase() !== target.toLowerCase()) {
-    return <p className="text-sm text-warning">Connect the project owner wallet {shortAddress(target)} to continue.</p>;
+    return (
+      <div className={`${note} flex flex-wrap items-center justify-between gap-3`}>
+        <span>
+          {address ? "Switch to" : "Connect"} the project owner wallet {shortAddress(target)} to continue.
+        </span>
+        {!address && <ConnectWalletButton />}
+      </div>
+    );
   }
   return null;
 }
@@ -56,10 +73,12 @@ export function OnchainPanel(props: Props) {
   if (!props.onchainProjectId || !props.onchain) return <RegisterProject {...props} />;
   const owner = props.onchain.owner;
   return (
-    <div className="flex flex-col gap-8">
-      <Overview {...props} onchain={props.onchain} />
-      <WalletGuard verifiedWallet={props.verifiedWallet} expected={owner} />
-      <PolicyHashSync {...props} onchain={props.onchain} />
+    <div className="flex flex-col gap-7 [&>*+*]:border-t [&>*+*]:border-mist [&>*+*]:pt-7">
+      <div className="flex flex-col gap-4">
+        <Overview {...props} onchain={props.onchain} />
+        <WalletGuard verifiedWallet={props.verifiedWallet} expected={owner} />
+        <PolicyHashSync {...props} onchain={props.onchain} />
+      </div>
       <FundProject {...props} onchain={props.onchain} />
       <Bounties {...props} />
       <Approvers {...props} />
@@ -67,43 +86,39 @@ export function OnchainPanel(props: Props) {
   );
 }
 
-function Overview({ onchain, asset, onchainProjectId }: Props & { onchain: OnchainSnapshot }) {
+function Overview({ onchain, asset }: Props & { onchain: OnchainSnapshot }) {
   const fmt = (v: string) => (asset ? formatAmount(v, asset.decimals, asset.symbol) : v);
-  const rows: Array<[string, string]> = [
-    ["Available (unallocated)", fmt(onchain.balances.available)],
-    ["Escrowed in open bounties", fmt(onchain.balances.escrowed)],
-    ["Committed to contributors", fmt(onchain.balances.committed)],
-    ["Total deposited", fmt(onchain.balances.totalDeposited)],
-    ["Total paid", fmt(onchain.balances.totalPaid)],
-    ["Total withdrawn", fmt(onchain.balances.totalWithdrawn)],
+  const tiles: Array<{ label: string; value: string; className: string; labelClass: string }> = [
+    { label: "Available", value: fmt(onchain.balances.available), className: "bg-fog", labelClass: "text-deep-teal" },
+    { label: "Escrowed", value: fmt(onchain.balances.escrowed), className: "bg-cream", labelClass: "text-graphite" },
+    { label: "Committed", value: fmt(onchain.balances.committed), className: "bg-lavender", labelClass: "text-plum" },
+    { label: "Paid", value: fmt(onchain.balances.totalPaid), className: "bg-sky", labelClass: "text-deep-teal" },
+    { label: "Withdrawn", value: fmt(onchain.balances.totalWithdrawn), className: "bg-fog", labelClass: "text-deep-teal" },
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="text-muted">Onchain project</dt>
-        <dd className="text-right font-mono text-ink">#{onchainProjectId}</dd>
-        <dt className="text-muted">Owner</dt>
-        <dd className="text-right font-mono text-ink">{shortAddress(onchain.owner)}</dd>
-        {onchain.pendingOwner !== zeroAddress && (
-          <>
-            <dt className="text-muted">Pending owner</dt>
-            <dd className="text-right font-mono text-ink">{shortAddress(onchain.pendingOwner)}</dd>
-          </>
-        )}
-        <dt className="text-muted">Asset</dt>
-        <dd className="text-right font-mono text-ink">
-          {isNativeAsset(onchain.asset) ? "MON (native)" : shortAddress(onchain.asset)}
-        </dd>
-      </dl>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        {rows.map(([label, value]) => (
-          <div key={label} className="contents">
-            <dt className="text-muted">{label}</dt>
-            <dd className="text-right font-mono text-ink">{value}</dd>
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+        {tiles.map((tile) => (
+          <div key={tile.label} className={`flex flex-col gap-1.5 rounded-badge px-5 py-4 ${tile.className}`}>
+            <p className={`text-caption font-medium ${tile.labelClass}`}>{tile.label}</p>
+            <p className="text-subheading leading-tight font-bold tracking-[-0.02em]">{tile.value}</p>
           </div>
         ))}
-      </dl>
-      <p className="text-xs text-subtle sm:col-span-2">Balances are read from the contract. They change only after a transaction confirms.</p>
+      </div>
+      <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-deep-teal">
+        <span>
+          Owner <strong className="font-mono text-ink">{shortAddress(onchain.owner)}</strong>
+        </span>
+        {onchain.pendingOwner !== zeroAddress && (
+          <span>
+            Pending owner <strong className="font-mono text-ink">{shortAddress(onchain.pendingOwner)}</strong>
+          </span>
+        )}
+        <span>
+          Asset <strong className="text-ink">{isNativeAsset(onchain.asset) ? "MON (native)" : shortAddress(onchain.asset)}</strong>
+        </span>
+        <span>Balances change only after a transaction confirms.</span>
+      </div>
     </div>
   );
 }
@@ -119,7 +134,7 @@ function RegisterProject({ projectId, verifiedWallet, publishedPolicy }: Props) 
   const [linking, setLinking] = useState(false);
 
   if (!publishedPolicy?.hash) {
-    return <p className="text-sm text-muted">Publish a reward policy first. Its asset and hash are used to register the project onchain.</p>;
+    return <p className="text-base text-deep-teal">Publish a reward policy first. Its asset and hash are used to register the project onchain.</p>;
   }
   const asset: Address = publishedPolicy.rewardAsset.toUpperCase() === "MON" ? zeroAddress : getAddress(publishedPolicy.rewardAsset);
 
@@ -153,14 +168,14 @@ function RegisterProject({ projectId, verifiedWallet, publishedPolicy }: Props) 
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted">
+    <div className="flex flex-col items-start gap-4">
+      <p className="text-base text-deep-teal">
         Registers this project in the ContriboRewards contract with your verified wallet as owner. Rewards will be paid in{" "}
         <span className="font-medium text-ink">{asset === zeroAddress ? "MON" : shortAddress(asset)}</span>; the asset cannot
         change later.
       </p>
       <WalletGuard verifiedWallet={verifiedWallet} />
-      <Button className="self-start" onClick={register} disabled={tx.busy || linking || !verifiedWallet}>
+      <Button onClick={register} disabled={tx.busy || linking || !verifiedWallet}>
         {linking ? "Linking registration…" : registeredTx ? "Retry linking" : "Register onchain"}
       </Button>
       <TxStatus state={tx.state} />
@@ -175,13 +190,11 @@ function PolicyHashSync({ onchainProjectId, publishedPolicy, onchain }: Props & 
   const tx = useContractTx();
   const hash = publishedPolicy?.hash;
   if (!hash) return null;
-  if (sameHash(hash, onchain.policyHash)) {
-    return <Badge tone="success" className="self-start">Onchain policy hash matches the published policy</Badge>;
-  }
+  if (sameHash(hash, onchain.policyHash)) return null;
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-line p-4">
-      <p className="text-sm text-ink">The onchain policy hash does not match the published policy. Approvals are blocked until it does.</p>
+    <div className="flex flex-col gap-3 rounded-badge bg-cream px-5 py-4">
+      <p className="text-sm text-graphite">The onchain policy hash does not match the published policy. Approvals are blocked until it does.</p>
       <Button
         size="sm"
         className="self-start"
@@ -210,7 +223,7 @@ function PolicyHashSync({ onchainProjectId, publishedPolicy, onchain }: Props & 
 
 function FundProject({ onchainProjectId, onchain, asset }: Props & { onchain: OnchainSnapshot }) {
   const config = useConfig();
-  const { address } = useConnection();
+  const { address } = useAccount();
   const router = useRouter();
   const tx = useContractTx();
   const [error, setError] = useState<string | null>(null);
@@ -295,14 +308,14 @@ function FundProject({ onchainProjectId, onchain, asset }: Props & { onchain: On
         void fund(String(new FormData(event.currentTarget).get("amount") ?? ""));
       }}
     >
-      <p className="text-sm font-medium text-ink">Fund the reward pool</p>
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <p className="text-body-lg font-bold">Fund the reward pool</p>
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Input name="amount" inputMode="decimal" required placeholder={`Amount in ${asset.symbol}`} aria-label="Amount" />
-        <Button type="submit" variant="secondary" disabled={tx.busy}>
+        <Button type="submit" disabled={tx.busy}>
           Deposit
         </Button>
       </div>
-      {!native && <p className="text-xs text-muted">ERC-20 deposits need two transactions: approve, then deposit.</p>}
+      {!native && <p className="text-[13px] text-deep-teal">ERC-20 deposits need two transactions: approve, then deposit.</p>}
       <TxStatus state={tx.state} />
       <FormMessage error={error} />
     </form>
@@ -347,24 +360,23 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm font-medium text-ink">Fixed bounties</p>
+      <p className="text-body-lg font-bold">Fixed bounties</p>
       {bounties.length > 0 && (
-        <ul className="divide-y divide-line rounded-md border border-line text-sm">
+        <ul className="overflow-hidden rounded-badge border border-mist">
           {bounties.map((b) => (
-            <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
-              <span className="text-ink">
-                Bounty #{b.id} · cancellable after {formatDate(new Date(b.deadline * 1000).toISOString())}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="font-mono text-ink">{fmt(b.amount)}</span>
-                <Badge tone={b.status === BountyStatusOnchain.Open ? "accent" : "neutral"}>{statusLabel[b.status]}</Badge>
-              </span>
+            <li key={b.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-mist px-5 py-3.5 last:border-b-0">
+              <span className="flex-[1_1_160px] text-[15px] font-bold">Bounty #{b.id}</span>
+              <span className="text-sm text-deep-teal">Deadline {formatDate(new Date(b.deadline * 1000).toISOString())}</span>
+              <Badge tone={b.status === BountyStatusOnchain.Open ? "terracotta" : b.status === BountyStatusOnchain.Cancelled ? "cream" : "neutral"}>
+                {statusLabel[b.status]}
+              </Badge>
+              <span className="text-base font-bold sm:w-28 sm:text-right">{fmt(b.amount)}</span>
             </li>
           ))}
         </ul>
       )}
       <form
-        className="grid gap-2 sm:grid-cols-[1fr_10rem_auto]"
+        className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]"
         onSubmit={(event) => {
           event.preventDefault();
           void create(new FormData(event.currentTarget));
@@ -372,11 +384,11 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
       >
         <Input name="amount" inputMode="decimal" required placeholder={`Amount in ${asset.symbol}`} aria-label="Bounty amount" />
         <Input name="days" type="number" min={1} max={365} defaultValue={30} aria-label="Deadline in days" />
-        <Button type="submit" variant="secondary" disabled={tx.busy}>
-          Escrow bounty
+        <Button type="submit" variant="secondary" tone="terracotta" disabled={tx.busy}>
+          Create bounty
         </Button>
       </form>
-      <p className="text-xs text-muted">Escrow comes from available funds and can only be reclaimed after the deadline if unawarded.</p>
+      <p className="text-[13px] text-deep-teal">Escrow comes from available funds and can only be reclaimed after the deadline if unawarded.</p>
       <TxStatus state={tx.state} />
       <FormMessage error={error} />
     </div>
@@ -412,30 +424,30 @@ function Approvers({ projectId, onchainProjectId, approvers }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm font-medium text-ink">Approvers</p>
-      <p className="text-xs text-muted">
-        The owner wallet can always approve. Approvers can commit available and escrowed funds to contributors, so add only
-        wallets you trust. Ownership transfers clear all approvers.
+      <p className="text-body-lg font-bold">Approvers</p>
+      <p className="text-sm text-deep-teal">
+        Approvers can commit your available and escrowed funds to contributors. Keep this list short. The owner wallet can
+        always approve, and ownership transfers clear all approvers.
       </p>
       {approvers.length > 0 && (
-        <ul className="divide-y divide-line rounded-md border border-line text-sm">
+        <ul className="flex flex-col">
           {approvers.map((a) => (
-            <li key={a.address} className="flex items-center justify-between gap-2 px-4 py-2">
-              <span className="font-mono text-ink">{a.address}</span>
-              <span className="flex items-center gap-2">
-                <Badge tone={a.active ? "success" : "warning"}>{a.active ? "Active onchain" : "Not active onchain"}</Badge>
-                {a.active && (
-                  <Button size="sm" variant="ghost" disabled={tx.busy} onClick={() => update(a.address, false)}>
-                    Remove
-                  </Button>
-                )}
+            <li key={a.address} className="flex flex-wrap items-center gap-3 border-b border-mist py-3">
+              <span className="min-w-0 flex-[1_1_200px] truncate font-mono text-[15px]" title={a.address}>
+                {shortAddress(a.address)}
               </span>
+              <Badge tone={a.active ? "sky" : "cream"}>{a.active ? "Active onchain" : "Not active onchain"}</Badge>
+              {a.active && (
+                <Button size="sm" variant="ghost" className="px-2 text-sm" disabled={tx.busy} onClick={() => update(a.address, false)}>
+                  Remove
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
       <form
-        className="flex flex-col gap-2 sm:flex-row"
+        className="flex flex-col gap-3 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
           void update(String(new FormData(event.currentTarget).get("address") ?? "").trim(), true);
@@ -444,7 +456,7 @@ function Approvers({ projectId, onchainProjectId, approvers }: Props) {
         <Field label="Approver address" className="flex-1">
           <Input name="address" required placeholder="0x…" />
         </Field>
-        <Button type="submit" variant="secondary" className="sm:self-end" disabled={tx.busy}>
+        <Button type="submit" variant="secondary" tone="plum" disabled={tx.busy}>
           Add approver
         </Button>
       </form>

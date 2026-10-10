@@ -1,88 +1,69 @@
 @import "tailwindcss";
 
 /*
- * Contribo design tokens.
- * Raw values live on :root (light) and are swapped for dark mode; Tailwind
- * utilities (bg-surface, text-muted, border-line, ...) are generated from @theme.
+ * Contribo design tokens (design/style-reference.md).
+ * Warm, matte and flat: no shadows, gradients or glow. Elevation comes from
+ * color fills and radius. Light theme only.
+ *
+ * Color meaning:
+ *   Sky        projects and repositories
+ *   Terracotta bounties
+ *   Lavender   contributor pools, rewards and claims
+ *   Plum       onchain panels
  */
 :root {
-  --paper: #f8f7f4;
-  --surface: #ffffff;
-  --surface-sunken: #f1efea;
-  --ink: #111113;
-  --ink-soft: #2a2a2e;
-  --muted: #5d5d66;
-  --subtle: #8a8a93;
-  --line: #e4e1da;
-  --line-strong: #d2cec5;
+  /* Palette */
+  --ink: #06040e;
+  --deep-teal: #10242f;
+  --graphite: #452623;
+  --fog: #f5f5f5;
+  --white: #ffffff;
+  --mist: #e1edf2;
+  --terracotta: #e39a4d;
+  --lavender: #cbb0eb;
+  --plum: #1f1738;
+  --sky: #a5c8d8;
+  --cream: #f6ddc4;
 
-  --accent: #5b3df5;
-  --accent-hover: #4a2ee0;
-  --accent-soft: #eeeaff;
-  --accent-ink: #3a24b8;
-  --on-accent: #ffffff;
-
-  --success: #17834a;
-  --success-soft: #e3f4ea;
-  --warning: #a35c00;
-  --warning-soft: #fdf0dc;
-  --danger: #c4322b;
-  --danger-soft: #fde7e5;
-
-  --ring: color-mix(in oklab, var(--accent) 45%, transparent);
-  --shadow-card: 0 1px 0 rgb(17 17 19 / 0.04), 0 1px 3px rgb(17 17 19 / 0.06);
-  --shadow-pop: 0 12px 32px -8px rgb(17 17 19 / 0.18), 0 2px 6px rgb(17 17 19 / 0.06);
+  /* Status colors, reserved for real status states (never the product triad). */
+  --success: #2e6b4f;
+  --success-soft: #e2efe8;
+  --warning: #7a4512;
+  --warning-soft: #f6ddc4;
+  --danger: #a3261e;
+  --danger-soft: #fbe4e1;
 
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0d0d10;
-    --surface: #15151a;
-    --surface-sunken: #1b1b21;
-    --ink: #f3f2ee;
-    --ink-soft: #d9d8d3;
-    --muted: #a3a3ad;
-    --subtle: #75757f;
-    --line: #26262d;
-    --line-strong: #34343c;
-
-    --accent: #8f7bff;
-    --accent-hover: #a495ff;
-    --accent-soft: #221d3d;
-    --accent-ink: #c4baff;
-    --on-accent: #0d0d10;
-
-    --success: #4cc684;
-    --success-soft: #12271c;
-    --warning: #f0a845;
-    --warning-soft: #2b2010;
-    --danger: #f2736b;
-    --danger-soft: #2e1514;
-
-    --shadow-card: 0 1px 0 rgb(0 0 0 / 0.4);
-    --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.6);
-
-    color-scheme: dark;
-  }
-}
-
 @theme inline {
-  --color-paper: var(--paper);
-  --color-surface: var(--surface);
-  --color-surface-sunken: var(--surface-sunken);
+  /* Brand palette (bg-sky, text-plum, border-terracotta, …) */
   --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-muted: var(--muted);
-  --color-subtle: var(--subtle);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-ink: var(--accent-ink);
-  --color-on-accent: var(--on-accent);
+  --color-deep-teal: var(--deep-teal);
+  --color-graphite: var(--graphite);
+  --color-fog: var(--fog);
+  --color-paper: var(--white);
+  --color-mist: var(--mist);
+  --color-terracotta: var(--terracotta);
+  --color-lavender: var(--lavender);
+  --color-plum: var(--plum);
+  --color-sky: var(--sky);
+  --color-cream: var(--cream);
+
+  /* Semantic names used across the app, mapped onto the palette */
+  --color-canvas: var(--fog);
+  --color-surface: var(--white);
+  --color-surface-sunken: var(--fog);
+  --color-ink-soft: var(--deep-teal);
+  --color-muted: var(--deep-teal);
+  --color-subtle: color-mix(in oklab, var(--deep-teal) 72%, var(--white));
+  --color-line: var(--mist);
+  --color-line-strong: var(--mist);
+  --color-accent: var(--lavender);
+  --color-accent-hover: color-mix(in oklab, var(--lavender) 85%, var(--plum));
+  --color-accent-soft: color-mix(in oklab, var(--lavender) 22%, var(--white));
+  --color-accent-ink: var(--plum);
+  --color-on-accent: var(--ink);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -90,17 +71,110 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sora), var(--font-geist-sans), ui-sans-serif, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Type: Manrope for everything */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
+  /* Type scale (text-display, text-heading-lg, …) */
+  --text-display: 60px;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-heading-lg: 40px;
+  --text-heading-lg--line-height: 1.09;
+  --text-heading-lg--letter-spacing: -0.02em;
+  --text-heading: 36px;
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -0.02em;
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.1;
+  --text-heading-sm--letter-spacing: -0.02em;
+  --text-subheading: 22px;
+  --text-subheading--line-height: 1.4;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+  --text-eyebrow: 11px;
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.1em;
 
-  --shadow-card: var(--shadow-card);
-  --shadow-pop: var(--shadow-pop);
+  /* Named radii (rounded-control, rounded-badge, rounded-card, rounded-feature) */
+  --radius-control: 8px;
+  --radius-badge: 16px;
+  --radius-card: 24px;
+  --radius-feature: 56px;
+}
+
+/*
+ * Hero shapes: slow, out-of-sync floating (background atmosphere, never attention-grabbing).
+ * Used with `motion-safe:` so people who prefer reduced motion see static shapes.
+ */
+@theme {
+  --animate-float: float var(--float-duration, 9s) ease-in-out infinite;
+  --animate-drift: drift var(--float-duration, 11s) ease-in-out infinite;
+  /* Entrance for card groups; pair with a per-item animation-delay for a stagger. */
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* Springy easing with a small overshoot: a single "bounce" on hover lifts. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 24px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(0, -16px, 0) rotate(7deg) scale(1.04);
+    }
+  }
+
+  @keyframes drift {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    33% {
+      transform: translate3d(10px, -8px, 0) rotate(-5deg);
+    }
+    66% {
+      transform: translate3d(-8px, 6px, 0) rotate(4deg);
+    }
+  }
+}
+
+/* Scroll reveal (src/components/motion/scroll-reveal.tsx). Only active once JS has mounted. */
+.reveal-ready [data-reveal] {
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-ready [data-reveal]:not([data-shown]) {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready [data-reveal] {
+    transition: none;
+  }
+
+  .reveal-ready [data-reveal]:not([data-shown]) {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer base {
@@ -109,7 +183,7 @@
   }
 
   body {
-    background: var(--paper);
+    background: var(--fog);
     color: var(--ink);
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
@@ -119,8 +193,7 @@
   h2,
   h3,
   h4 {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-weight: 700;
     text-wrap: balance;
   }
 
@@ -128,20 +201,42 @@
     text-wrap: pretty;
   }
 
+  a:hover {
+    color: var(--plum);
+  }
+
   ::selection {
-    background: var(--accent-soft);
-    color: var(--accent-ink);
+    background: var(--lavender);
+    color: var(--ink);
   }
 
   :focus-visible {
-    outline: 2px solid var(--ring);
+    outline: 2px solid var(--plum);
     outline-offset: 2px;
   }
-}
 
-/* The supplied logo is near-black ink on transparency; invert it on dark backgrounds. */
-@media (prefers-color-scheme: dark) {
-  .brand-ink {
-    filter: invert(1);
+  summary {
+    list-style-position: outside;
+  }
+
+  /* Every CTA and interactive control shows a pointer (Tailwind's preflight resets buttons to default). */
+  a[href],
+  button,
+  [role="button"],
+  [role="menuitem"],
+  summary,
+  select,
+  label:has(> input[type="checkbox"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
   }
 }

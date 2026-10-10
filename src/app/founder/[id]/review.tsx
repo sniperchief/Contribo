@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { parseUnits } from "viem";
-import { useConfig } from "wagmi";
+import { useConfig, useAccount } from "wagmi";
 import { simulateContract, writeContract } from "wagmi/actions";
 import { syncContribution } from "@/app/contributions/actions";
 import { acceptContribution, prepareApproval, rejectContribution } from "@/app/founder/actions";
@@ -11,6 +11,7 @@ import { SyncContribution } from "@/components/contributions/claim-reward";
 import { StageBadge } from "@/components/contributions/stage-badge";
 import { TxStatus } from "@/components/tx/tx-status";
 import { useContractTx } from "@/components/tx/use-contract-tx";
+import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { FormMessage, Input, Select } from "@/components/ui/field";
 import { contriboRewards } from "@/lib/contracts/config";
@@ -44,9 +45,9 @@ type Props = {
 };
 
 export function Review({ rows, ...rest }: Props) {
-  if (rows.length === 0) return <p className="text-sm text-muted">No contributions have been submitted yet.</p>;
+  if (rows.length === 0) return <p className="text-base text-deep-teal">No contributions have been submitted yet.</p>;
   return (
-    <ul className="divide-y divide-line rounded-md border border-line">
+    <ul className="flex flex-col gap-3">
       {rows.map((row) => (
         <ReviewItem key={row.id} row={row} {...rest} />
       ))}
@@ -59,13 +60,13 @@ function ReviewItem({ row, asset, openBounties, onchainReady }: Omit<Props, "row
   const fmt = (v: string) => (asset ? formatAmount(v, asset.decimals, asset.symbol) : `${v} (base units)`);
 
   return (
-    <li className="flex flex-col gap-3 px-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <li className="flex flex-col gap-3.5 rounded-badge border border-mist px-6 py-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <a href={row.prUrl} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium text-ink hover:underline">
+          <a href={row.prUrl} target="_blank" rel="noreferrer" className="block truncate text-base font-bold text-ink">
             {row.prTitle ?? `Pull request #${row.prNumber}`}
           </a>
-          <p className="text-xs text-muted">
+          <p className="mt-1 text-[13px] text-deep-teal">
             @{row.githubLogin} · merged {formatDate(row.mergedAt)}
             {row.policyVersion !== null && ` · under policy v${row.policyVersion}`}
             {row.rewardAmount && ` · reward ${fmt(row.rewardAmount)}`}
@@ -82,13 +83,13 @@ function ReviewItem({ row, asset, openBounties, onchainReady }: Omit<Props, "row
       {row.stage === "accepted" && (
         <>
           {row.verifiedWallet?.toLowerCase() !== row.contributorWallet?.toLowerCase() && (
-            <p className="text-xs text-warning">
+            <p className="text-[13px] text-warning">
               The contributor has changed their payout wallet since this was accepted. Update the reward to use the new wallet.
             </p>
           )}
           <ApproveOnchain row={row} onchainReady={onchainReady} decision={decision} />
           <details className="text-sm">
-            <summary className="cursor-pointer text-muted">Change reward or payout wallet</summary>
+            <summary className="cursor-pointer text-[13px] text-deep-teal">Change reward or payout wallet</summary>
             <div className="mt-2">
               <AcceptForm
                 row={row}
@@ -118,15 +119,15 @@ function AcceptForm({
   const [bountyId, setBountyId] = useState("");
 
   if (!onchainReady || !asset) {
-    return <p className="text-xs text-muted">Register the project onchain to set rewards.</p>;
+    return <p className="text-[13px] text-deep-teal">Register the project onchain to set rewards.</p>;
   }
   if (!row.verifiedWallet) {
-    return <p className="text-xs text-warning">The contributor has not linked a verified wallet yet, so no reward can be set.</p>;
+    return <p className="text-[13px] text-warning">The contributor has not linked a verified wallet yet, so no reward can be set.</p>;
   }
 
   return (
     <form
-      className="flex flex-col gap-2 sm:flex-row sm:items-center"
+      className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center"
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -141,7 +142,7 @@ function AcceptForm({
         decision.run(() => acceptContribution(row.id, { amount, bountyId: bounty?.id ?? null }), "Accepted. Approve it onchain next.");
       }}
     >
-      <Select value={bountyId} onChange={(e) => setBountyId(e.target.value)} aria-label="Reward source" className="sm:w-56">
+      <Select value={bountyId} onChange={(e) => setBountyId(e.target.value)} aria-label="Reward source" className="h-11 text-[15px] sm:w-56">
         <option value="">From the reward pool</option>
         {openBounties.map((b) => (
           <option key={b.id} value={b.id}>
@@ -149,12 +150,12 @@ function AcceptForm({
           </option>
         ))}
       </Select>
-      {!bountyId && <Input name="amount" inputMode="decimal" required placeholder={`Reward in ${asset.symbol}`} aria-label="Reward amount" />}
+      {!bountyId && <Input name="amount" inputMode="decimal" required placeholder={`Reward in ${asset.symbol}`} aria-label="Reward amount" className="h-11 text-[15px] sm:w-44" />}
       <Button type="submit" size="sm" disabled={decision.pending}>
         {submitLabel}
       </Button>
       {submitLabel === "Accept" && (
-        <Button type="button" size="sm" variant="ghost" disabled={decision.pending} onClick={() => decision.run(() => rejectContribution(row.id))}>
+        <Button type="button" size="sm" variant="ghost" className="px-2.5" disabled={decision.pending} onClick={() => decision.run(() => rejectContribution(row.id))}>
           Reject
         </Button>
       )}
@@ -174,6 +175,7 @@ function ApproveOnchain({
   const config = useConfig();
   const router = useRouter();
   const tx = useContractTx();
+  const { address } = useAccount();
   const [error, setError] = useState<string | null>(null);
 
   async function approve() {
@@ -213,16 +215,17 @@ function ApproveOnchain({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         <Button size="sm" variant="accent" onClick={approve} disabled={!onchainReady || tx.busy || tx.state.phase === "confirmed"}>
           Approve onchain
         </Button>
-        <Button size="sm" variant="ghost" disabled={decision.pending || tx.busy} onClick={() => decision.run(() => rejectContribution(row.id))}>
+        <Button size="sm" variant="ghost" className="px-2.5" disabled={decision.pending || tx.busy} onClick={() => decision.run(() => rejectContribution(row.id))}>
           Reject
         </Button>
         <SyncContribution contributionId={row.id} />
+        {!address && <ConnectWalletButton />}
       </div>
-      <p className="text-xs text-muted">
+      <p className="text-[13px] text-deep-teal">
         Your wallet must be the project owner or an approver. Approved rewards are final and reserved for the contributor.
       </p>
       <TxStatus state={tx.state} />

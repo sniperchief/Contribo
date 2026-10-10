@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contribo — Founder console</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5f5f5}
+a{color:#06040e}a:hover{color:#1f1738}
+</style>
+</helmet>
+<div style="font-family: Manrope, ui-sans-serif, system-ui, sans-serif; color: #06040e; background: #f5f5f5; min-height: 1500px; min-width: 0; overflow-x: hidden">
+
+<!-- APP HEADER -->
+<header style="background: #ffffff; border-bottom: 1px solid #e1edf2; padding: 0 clamp(16px, 4vw, 40px)">
+<nav aria-label="Main" style="max-width: 1200px; margin: 0 auto; padding: 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px">
+<a href="landing.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
+<img src="../../src/assets/brand/contribo-mark.png" alt="" style="width: 30px; height: 23px; object-fit: contain">
+<span style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em">contribo</span>
+</a>
+<div style="display: flex; flex-wrap: wrap; gap: 0 32px; font-size: 16px; font-weight: 500; flex: 1 1 auto">
+<a href="projects.html" style="text-decoration: none; padding: 12px 0">Projects</a>
+<a href="dashboard.html" style="text-decoration: none; padding: 12px 0">Dashboard</a>
+<a href="founder.html" aria-current="page" style="text-decoration: none; padding: 12px 0; border-bottom: 2px solid #06040e">Founder</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 8px; padding: 0 16px; height: 44px; cursor: pointer">Monad testnet · 0x3f…a91c</button>
+<span aria-label="Your account" role="img" style="width: 44px; height: 44px; border-radius: 22px; background: #e39a4d; display: flex; align-items: center; justify-content: center; font-weight: 700">F</span>
+</div>
+</nav>
+</header>
+
+<!-- PAGE TITLE -->
+<section style="padding: 56px clamp(16px, 4vw, 40px) 40px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 680px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">Founder console</p>
+<h1 style="margin: 0; font-size: 40px; line-height: 1.09; font-weight: 700; letter-spacing: -0.02em">Your projects</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.5; color: #10242f">Connect repositories, publish reward terms, register the project onchain, fund it, and review contributions.</p>
+</div>
+<a href="#create" style="display: inline-flex; align-items: center; background: #06040e; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 500; padding: 16px 24px; border-radius: 8px">+ Create a project</a>
+</div>
+</section>
+
+<!-- SETUP STEPS -->
+<section style="padding: 0 clamp(16px, 4vw, 40px) 40px">
+<ol style="max-width: 1200px; margin: 0 auto; list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<li style="background: #ffffff; border-radius: 24px; padding: 24px; display: flex; gap: 14px; align-items: center"><span style="width: 36px; height: 36px; border-radius: 18px; background: #a5c8d8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: none">1</span><span style="font-size: 15px; font-weight: 500">Verify your repos</span></li>
+<li style="background: #ffffff; border-radius: 24px; padding: 24px; display: flex; gap: 14px; align-items: center"><span style="width: 36px; height: 36px; border-radius: 18px; background: #cbb0eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: none">2</span><span style="font-size: 15px; font-weight: 500">Publish a reward policy</span></li>
+<li style="background: #ffffff; border-radius: 24px; padding: 24px; display: flex; gap: 14px; align-items: center"><span style="width: 36px; height: 36px; border-radius: 18px; background: #f6ddc4; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: none">3</span><span style="font-size: 15px; font-weight: 500">Register onchain</span></li>
+<li style="background: #ffffff; border-radius: 24px; padding: 24px; display: flex; gap: 14px; align-items: center"><span style="width: 36px; height: 36px; border-radius: 18px; background: #e39a4d; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: none">4</span><span style="font-size: 15px; font-weight: 500">Fund and review work</span></li>
+</ol>
+</section>
+
+<!-- PROJECTS -->
+<section style="padding: 0 clamp(16px, 4vw, 40px) 40px">
+<div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px">
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="founder-project.html" style="background: #ffffff; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 16px; text-decoration: none; color: #06040e">
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="width: 52px; height: 52px; border-radius: 16px; background: {{p.tint}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex: none">{{p.initial}}</span>
+<div style="min-width: 0"><p style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em">{{p.name}}</p><p style="margin: 2px 0 0; font-size: 14px; color: #10242f">/{{p.slug}}</p></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{p.badges}}" as="b" hint-placeholder-count="3"><span style="font-size: 12px; font-weight: 500; background: {{b.bg}}; color: {{b.fg}}; padding: 6px 14px; border-radius: 16px">{{b.label}}</span></sc-for>
+</div>
+<span style="font-size: 16px; font-weight: 500; padding-top: 14px; border-top: 1px solid #e1edf2">Manage project →</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<!-- CREATE A PROJECT -->
+<section id="create" style="padding: 0 clamp(16px, 4vw, 40px) 80px">
+<div style="max-width: 1200px; margin: 0 auto; background: #ffffff; border-radius: 24px; padding: 36px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 32px 56px">
+<div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">New project</p>
+<h2 style="margin: 0; font-size: 24px; line-height: 1.1; font-weight: 700; letter-spacing: -0.48px">Create a project</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #10242f">Projects start as drafts. Publish when your repositories and reward terms are ready.</p>
+</div>
+<form style="flex: 2 1 520px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pname" style="font-size: 14px; font-weight: 500">Project name</label>
+<input id="pname" placeholder="Monad SDK" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pslug" style="font-size: 14px; font-weight: 500">Slug</label>
+<input id="pslug" placeholder="monad-sdk" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<span style="font-size: 12px; color: #10242f">Used in the project URL: lowercase letters, numbers and hyphens.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1">
+<label for="ptag" style="font-size: 14px; font-weight: 500">Tagline</label>
+<input id="ptag" placeholder="Typed client and tooling for Monad apps" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+</div>
+<div style="grid-column: 1 / -1">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 16px 24px; cursor: pointer">Create draft project</button>
+</div>
+</form>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const ok = (label) => ({ label, bg: '#a5c8d8', fg: '#10242f' });
+const acc = (label) => ({ label, bg: '#cbb0eb', fg: '#1f1738' });
+const warn = (label) => ({ label, bg: '#f6ddc4', fg: '#452623' });
+const neu = (label) => ({ label, bg: '#e1edf2', fg: '#10242f' });
+return {
+projects: [
+{ initial: 'M', tint: '#a5c8d8', name: 'Monad SDK', slug: 'monad-sdk', badges: [ok('Published'), acc('Policy published'), ok('Onchain #3')] },
+{ initial: 'S', tint: '#cbb0eb', name: 'SDK Examples', slug: 'sdk-examples', badges: [ok('Published'), acc('Policy published'), neu('Not onchain')] },
+{ initial: 'D', tint: '#f6ddc4', name: 'Dev Docs', slug: 'dev-docs', badges: [neu('Draft'), warn('No published policy'), neu('Not onchain')] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

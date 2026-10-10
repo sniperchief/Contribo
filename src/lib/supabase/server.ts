@@ -35,7 +35,10 @@ export async function createClient() {
   });
 }
 
-/** The signed-in user's profile, or `null` when signed out or unconfigured. */
+/**
+ * The signed-in user's profile with their linked GitHub login, or `null` when
+ * signed out or unconfigured. `githubLogin` comes from the OAuth-linked identity.
+ */
 export async function getCurrentProfile() {
   const supabase = await createClient();
   if (!supabase) return null;
@@ -44,11 +47,16 @@ export async function getCurrentProfile() {
   const userId = claims?.claims.sub;
   if (!userId) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
+  const [{ data: profile }, { data: github }] = await Promise.all([
+    supabase.from("profiles").select("id, username, display_name, avatar_url, wallet_address, wallet_verified_at").eq("id", userId).maybeSingle(),
+    supabase.from("github_identities").select("github_login, avatar_url").eq("user_id", userId).maybeSingle(),
+  ]);
+  if (!profile) return null;
 
-  return profile;
+  return {
+    ...profile,
+    githubLogin: github?.github_login ?? null,
+    walletLinked: !!(profile.wallet_address && profile.wallet_verified_at),
+    avatar_url: profile.avatar_url ?? github?.avatar_url ?? null,
+  };
 }

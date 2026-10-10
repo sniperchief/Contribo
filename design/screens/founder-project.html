@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contribo — Manage project</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5f5f5}
+a{color:#06040e}a:hover{color:#1f1738}
+</style>
+</helmet>
+<div style="font-family: Manrope, ui-sans-serif, system-ui, sans-serif; color: #06040e; background: #f5f5f5; min-height: 4200px; min-width: 0; overflow-x: hidden">
+
+<!-- APP HEADER -->
+<header style="background: #ffffff; border-bottom: 1px solid #e1edf2; padding: 0 clamp(16px, 4vw, 40px)">
+<nav aria-label="Main" style="max-width: 1200px; margin: 0 auto; padding: 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px">
+<a href="landing.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
+<img src="../../src/assets/brand/contribo-mark.png" alt="" style="width: 30px; height: 23px; object-fit: contain">
+<span style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em">contribo</span>
+</a>
+<div style="display: flex; flex-wrap: wrap; gap: 0 32px; font-size: 16px; font-weight: 500; flex: 1 1 auto">
+<a href="projects.html" style="text-decoration: none; padding: 12px 0">Projects</a>
+<a href="dashboard.html" style="text-decoration: none; padding: 12px 0">Dashboard</a>
+<a href="founder.html" aria-current="page" style="text-decoration: none; padding: 12px 0; border-bottom: 2px solid #06040e">Founder</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 8px; padding: 0 16px; height: 44px; cursor: pointer">Monad testnet · 0x3f…a91c</button>
+<span aria-label="Your account" role="img" style="width: 44px; height: 44px; border-radius: 22px; background: #e39a4d; display: flex; align-items: center; justify-content: center; font-weight: 700">F</span>
+</div>
+</nav>
+</header>
+
+<!-- PROJECT TITLE -->
+<section style="padding: 40px clamp(16px, 4vw, 40px) 32px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-size: 14px; color: #10242f"><a href="founder.html" style="text-decoration: none; font-weight: 500">Your projects</a> <span aria-hidden="true">/</span> Monad SDK</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px">
+<div style="display: flex; align-items: center; gap: 18px">
+<span style="width: 64px; height: 64px; border-radius: 20px; background: #a5c8d8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; flex: none">M</span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 14px; border-radius: 16px">Published</span>
+<span style="font-size: 12px; font-weight: 500; background: #cbb0eb; color: #1f1738; padding: 6px 14px; border-radius: 16px">Owner</span>
+</div>
+<h1 style="margin: 0; font-size: 40px; line-height: 1.09; font-weight: 700; letter-spacing: -0.02em">Monad SDK</h1>
+</div>
+</div>
+<a href="projects.html" style="font-size: 16px; font-weight: 500; text-decoration: none; padding: 8px 0">View public page →</a>
+</div>
+</div>
+</section>
+
+<section style="padding: 0 clamp(16px, 4vw, 40px) 80px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+
+<!-- Section menu -->
+<nav aria-label="On this page" style="flex: 1 1 220px; max-width: 100%; background: #ffffff; border-radius: 24px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+<p style="margin: 0 0 8px; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">On this page</p>
+<a href="#details" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 10px 12px; border-radius: 8px; background: #f5f5f5">Project details</a>
+<a href="#repos" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Repositories</a>
+<a href="#policy" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Reward policy</a>
+<a href="#onchain" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 10px 12px; border-radius: 8px">Onchain</a>
+<a href="#review" style="text-decoration: none; font-size: 15px; font-weight: 500; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center">Review contributions <span style="font-size: 12px; background: #06040e; color: #ffffff; padding: 2px 8px; border-radius: 16px">2</span></a>
+</nav>
+
+<div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+
+<!-- PROJECT DETAILS -->
+<div id="details" style="background: #ffffff; border-radius: 24px; padding: 36px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">Project details</p>
+<h2 style="margin: 0; font-size: 24px; line-height: 1.1; font-weight: 700; letter-spacing: -0.48px">How your project appears</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="n" style="font-size: 14px; font-weight: 500">Name</label><input id="n" value="Monad SDK" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="w" style="font-size: 14px; font-weight: 500">Website</label><input id="w" placeholder="https://" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"><span style="font-size: 12px; color: #10242f">Optional, https:// only.</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="t" style="font-size: 14px; font-weight: 500">Tagline</label><input id="t" value="Typed client and tooling for Monad apps" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"></div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="d" style="font-size: 14px; font-weight: 500">Description</label><textarea id="d" rows="4" style="font: inherit; font-size: 16px; line-height: 1.5; padding: 12px 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e; resize: vertical">A TypeScript client for building apps on Monad, with typed contracts and batched RPC calls.</textarea></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 14px 24px; cursor: pointer">Save details</button>
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: transparent; color: #06040e; border: 2px solid #e1edf2; border-radius: 8px; padding: 12px 22px; cursor: pointer">Archive project</button>
+</div>
+</div>
+
+<!-- REPOSITORIES -->
+<div id="repos" style="background: #ffffff; border-radius: 24px; overflow: hidden">
+<div style="background: #a5c8d8; padding: 28px 36px; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #10242f">Repositories</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #10242f">Contributions are accepted only from repositories verified through the GitHub API.</p>
+</div>
+<div style="padding: 12px 36px 36px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #e1edf2">
+<span style="flex: 1 1 240px; font-size: 16px; font-weight: 700">example-org/monad-sdk</span>
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 14px; border-radius: 16px">Verified · owner match</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 8px; height: 44px; cursor: pointer">Remove</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #e1edf2">
+<span style="flex: 1 1 240px; font-size: 16px; font-weight: 700">example-org/sdk-examples</span>
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 14px; border-radius: 16px">Verified · file check</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 8px; height: 44px; cursor: pointer">Remove</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 16px 0; border-bottom: 1px solid #e1edf2">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span style="flex: 1 1 240px; font-size: 16px; font-weight: 700">example-org/sdk-docs</span>
+<span style="font-size: 12px; font-weight: 500; background: #f6ddc4; color: #452623; padding: 6px 14px; border-radius: 16px">Unverified</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 0 16px; height: 44px; cursor: pointer">Verify</button>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 8px; height: 44px; cursor: pointer">Remove</button>
+</div>
+<div style="background: #e1edf2; border-radius: 16px; padding: 16px 20px; font-size: 14px; line-height: 1.5; color: #10242f">For organization repos, add this file to the default branch with your project token, then press Verify:
+<p style="margin: 8px 0 0; font-family: ui-monospace, Menlo, monospace; color: #06040e">.github/contribo-verification.txt</p></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px">
+<label for="repo" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Repository</label>
+<input id="repo" placeholder="owner/repository or https://github.com/owner/repository" style="flex: 1 1 320px; min-width: 0; font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: transparent; color: #10242f; border: 2px solid #a5c8d8; border-radius: 8px; padding: 0 22px; height: 48px; cursor: pointer">Add repository</button>
+</div>
+</div>
+</div>
+
+<!-- REWARD POLICY -->
+<div id="policy" style="background: #ffffff; border-radius: 24px; overflow: hidden">
+<div style="background: #cbb0eb; padding: 28px 36px; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #1f1738">Reward policy</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #1f1738">Publish explicit terms before contributors start. Published versions are frozen and anchored onchain by hash.</p>
+</div>
+<div style="padding: 28px 36px 36px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e1edf2">
+<span style="font-size: 16px; font-weight: 700; flex: 1 1 200px">v2 · Hybrid rewards</span>
+<span style="font-size: 14px; color: #10242f">15% pool · MON</span>
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 14px; border-radius: 16px">Published</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 8px; height: 44px; cursor: pointer">Retire</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e1edf2">
+<span style="font-size: 16px; font-weight: 700; flex: 1 1 200px">v1 · Bounties only</span>
+<span style="font-size: 14px; color: #10242f">0% pool · MON</span>
+<span style="font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; padding: 6px 14px; border-radius: 16px">Retired</span>
+</div>
+</div>
+
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">New draft · v3</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="pt" style="font-size: 14px; font-weight: 500">Title</label><input id="pt" placeholder="e.g. Hybrid rewards 2027" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="pm" style="font-size: 14px; font-weight: 500">Reward model</label><select id="pm" style="font: inherit; font-size: 16px; height: 48px; padding: 0 12px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"><option>Hybrid</option><option>Bounty</option><option>Funding share</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="pb" style="font-size: 14px; font-weight: 500">Contributor pool (basis points)</label><input id="pb" value="1500" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"><span style="font-size: 12px; color: #10242f">Share of future funding reserved for contributors. 1500 = 15%.</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="pa" style="font-size: 14px; font-weight: 500">Reward asset</label><input id="pa" value="MON" disabled style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #e1edf2; color: #10242f"><span style="font-size: 12px; color: #10242f">Fixed by the onchain registration.</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="ps" style="font-size: 14px; font-weight: 500">Summary</label><input id="ps" placeholder="One line contributors see first" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"></div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="pterms" style="font-size: 14px; font-weight: 500">Terms</label><textarea id="pterms" rows="5" placeholder="Full terms contributors agree to (Markdown)." style="font: inherit; font-size: 16px; line-height: 1.5; padding: 12px 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e; resize: vertical"></textarea></div>
+<div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1"><label for="pe" style="font-size: 14px; font-weight: 500">Eligibility rules (JSON)</label><textarea id="pe" rows="3" style="font-family: ui-monospace, Menlo, monospace; font-size: 14px; line-height: 1.5; padding: 12px 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e; resize: vertical">{ "labels": ["good first issue", "bounty"] }</textarea></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: transparent; color: #1f1738; border: 2px solid #cbb0eb; border-radius: 8px; padding: 12px 22px; cursor: pointer">Save draft</button>
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 14px 24px; cursor: pointer">Publish v3</button>
+</div>
+</div>
+</div>
+
+<!-- ONCHAIN -->
+<div id="onchain" style="background: #ffffff; border-radius: 24px; overflow: hidden">
+<div style="background: #1f1738; padding: 28px 36px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #cbb0eb">Onchain · project #3</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #e1edf2">Registration, funding, bounties and approvers in the ContriboRewards contract.</p>
+</div>
+<span style="font-size: 12px; font-weight: 500; background: #cbb0eb; color: #1f1738; padding: 8px 14px; border-radius: 16px">Policy hash matches the published policy</span>
+</div>
+<div style="padding: 32px 36px 36px; display: flex; flex-direction: column; gap: 32px">
+
+<!-- Balances -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px">
+<sc-for list="{{balances}}" as="b" hint-placeholder-count="5">
+<div style="background: {{b.bg}}; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 12px; font-weight: 500; color: {{b.fg}}">{{b.label}}</p>
+<p style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em">{{b.value}}</p>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 32px; font-size: 14px; color: #10242f">
+<span>Owner <strong style="color: #06040e; font-family: ui-monospace, Menlo, monospace">0x3f…a91c</strong></span>
+<span>Asset <strong style="color: #06040e">MON (native)</strong></span>
+<span>Balances change only after a transaction confirms.</span>
+</div>
+
+<!-- Fund -->
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 28px; border-top: 1px solid #e1edf2">
+<p style="margin: 0; font-size: 18px; font-weight: 700">Fund the reward pool</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<label for="amt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Amount</label>
+<input id="amt" inputmode="decimal" placeholder="Amount in MON" style="flex: 1 1 240px; min-width: 0; font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 0 24px; height: 48px; cursor: pointer">Deposit</button>
+</div>
+</div>
+
+<!-- Bounties -->
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 28px; border-top: 1px solid #e1edf2">
+<p style="margin: 0; font-size: 18px; font-weight: 700">Fixed bounties</p>
+<div style="border-radius: 16px; overflow: hidden; border: 1px solid #e1edf2">
+<sc-for list="{{bounties}}" as="b" hint-placeholder-count="3">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 14px 20px; border-bottom: 1px solid #e1edf2">
+<span style="font-size: 15px; font-weight: 700; flex: 1 1 160px">Bounty #{{b.id}}</span>
+<span style="font-size: 14px; color: #10242f">{{b.due}}</span>
+<span style="font-size: 12px; font-weight: 500; background: {{b.bg}}; color: {{b.fg}}; padding: 6px 12px; border-radius: 16px">{{b.status}}</span>
+<span style="font-size: 16px; font-weight: 700; width: 100px; text-align: right">{{b.amount}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<label for="bamt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bounty amount</label>
+<input id="bamt" inputmode="decimal" placeholder="Amount in MON" style="flex: 2 1 200px; min-width: 0; font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<label for="bdays" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Deadline in days</label>
+<input id="bdays" type="number" value="30" style="flex: 1 1 100px; min-width: 0; font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: transparent; color: #452623; border: 2px solid #e39a4d; border-radius: 8px; padding: 0 22px; height: 48px; cursor: pointer">Create bounty</button>
+</div>
+<p style="margin: 0; font-size: 13px; color: #10242f">Escrow comes from available funds and can only be reclaimed after the deadline if unawarded.</p>
+</div>
+
+<!-- Approvers -->
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 28px; border-top: 1px solid #e1edf2">
+<p style="margin: 0; font-size: 18px; font-weight: 700">Approvers</p>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #10242f">Approvers can commit your available and escrowed funds to contributors. Keep this list short.</p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #e1edf2">
+<span style="flex: 1 1 200px; font-family: ui-monospace, Menlo, monospace; font-size: 15px">0x8b2e…24e0</span>
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 12px; border-radius: 16px">Active onchain</span>
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 8px; height: 44px; cursor: pointer">Remove</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+<div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 8px"><label for="appr" style="font-size: 14px; font-weight: 500">Approver address</label><input id="appr" placeholder="0x…" style="font: inherit; font-size: 16px; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"></div>
+<button type="button" style="font: inherit; font-size: 16px; font-weight: 500; background: transparent; color: #1f1738; border: 2px solid #1f1738; border-radius: 8px; padding: 0 22px; height: 48px; cursor: pointer">Add approver</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- REVIEW CONTRIBUTIONS -->
+<div id="review" style="background: #ffffff; border-radius: 24px; padding: 36px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">Review contributions</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #10242f">Verified pull requests are evidence only. Decide a reward, then approve it onchain from an owner or approver wallet.</p>
+</div>
+
+<!-- Verified: accept form -->
+<div style="border: 1px solid #e1edf2; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="min-width: 0"><a href="#pr" style="font-size: 16px; font-weight: 700; text-decoration: none">Typed event decoding for logs</a><p style="margin: 4px 0 0; font-size: 13px; color: #10242f">@kofi.dev · merged 8 Oct 2026 · under policy v2</p></div>
+<span style="font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; padding: 6px 12px; border-radius: 16px">Verified</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<label for="src" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Reward source</label>
+<select id="src" style="flex: 1 1 220px; font: inherit; font-size: 15px; height: 44px; padding: 0 12px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e"><option>From the reward pool</option><option>Bounty #12 (400 MON)</option></select>
+<label for="ramt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Reward amount</label>
+<input id="ramt" placeholder="Reward in MON" style="flex: 1 1 160px; min-width: 0; font: inherit; font-size: 15px; height: 44px; padding: 0 12px; border: 1px solid #e1edf2; border-radius: 8px; background: #f5f5f5; color: #06040e">
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 8px; padding: 0 20px; height: 44px; cursor: pointer">Accept</button>
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 10px; height: 44px; cursor: pointer">Reject</button>
+</div>
+</div>
+
+<!-- Accepted: approve onchain -->
+<div style="border: 1px solid #e1edf2; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="min-width: 0"><a href="#pr" style="font-size: 16px; font-weight: 700; text-decoration: none">Fix nonce race on parallel sends</a><p style="margin: 4px 0 0; font-size: 13px; color: #10242f">@lin · merged 5 Oct 2026 · under policy v2 · reward 180 MON · to 0x51…c0de</p></div>
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 6px 12px; border-radius: 16px">Accepted</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; background: #cbb0eb; color: #06040e; border: 0; border-radius: 8px; padding: 0 20px; height: 44px; cursor: pointer">Approve onchain</button>
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; background: transparent; color: #06040e; border: 0; padding: 0 10px; height: 44px; cursor: pointer">Reject</button>
+<span style="font-size: 13px; color: #10242f">Change reward or payout wallet</span>
+</div>
+</div>
+
+<!-- Other stages -->
+<sc-for list="{{reviewed}}" as="r" hint-placeholder-count="3">
+<div style="border: 1px solid #e1edf2; border-radius: 16px; padding: 20px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="min-width: 0"><a href="#pr" style="font-size: 16px; font-weight: 700; text-decoration: none">{{r.title}}</a><p style="margin: 4px 0 0; font-size: 13px; color: #10242f">{{r.meta}}</p></div>
+<span style="font-size: 12px; font-weight: 500; background: {{r.bg}}; color: {{r.fg}}; padding: 6px 12px; border-radius: 16px">{{r.stage}}</span>
+</div>
+</sc-for>
+</div>
+
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":4200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+balances: [
+{ label: 'Available', value: '1,200 MON', bg: '#f5f5f5', fg: '#10242f' },
+{ label: 'Escrowed', value: '650 MON', bg: '#f6ddc4', fg: '#452623' },
+{ label: 'Committed', value: '430 MON', bg: '#cbb0eb', fg: '#1f1738' },
+{ label: 'Paid', value: '2,310 MON', bg: '#a5c8d8', fg: '#10242f' },
+{ label: 'Withdrawn', value: '0 MON', bg: '#f5f5f5', fg: '#10242f' }
+],
+bounties: [
+{ id: '12', due: 'Deadline 24 Oct 2026', status: 'Open', bg: '#e39a4d', fg: '#06040e', amount: '400 MON' },
+{ id: '11', due: 'Deadline 19 Oct 2026', status: 'Open', bg: '#e39a4d', fg: '#06040e', amount: '250 MON' },
+{ id: '8', due: 'Deadline 2 Oct 2026', status: 'Awarded', bg: '#e1edf2', fg: '#10242f', amount: '250 MON' }
+],
+reviewed: [
+{ title: 'Batch RPC requests in the client', meta: '@adaeze · merged 1 Oct 2026 · reward 250 MON · bounty #8', stage: 'Approved onchain', bg: '#cbb0eb', fg: '#1f1738' },
+{ title: 'Gas estimator helper', meta: '@adaeze · merged 20 Sep 2026 · reward 200 MON', stage: 'Paid', bg: '#06040e', fg: '#ffffff' },
+{ title: 'Typo fixes in README', meta: '@sam.o · merged 18 Sep 2026', stage: 'Rejected', bg: '#f6ddc4', fg: '#452623' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

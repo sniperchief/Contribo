@@ -3,16 +3,21 @@ import { stageDescriptions, stageLabels, type ContributionStage } from "@/lib/co
 
 type Stage = ContributionStage | "detected" | "claimable";
 
+/** Stage colors from the design brief. */
 const tones: Record<Stage, BadgeTone> = {
-  detected: "neutral",
-  submitted: "neutral",
-  verified: "accent",
-  accepted: "warning",
-  approved: "success",
-  claimable: "success",
-  paid: "neutral",
-  rejected: "danger",
+  detected: "fog",
+  submitted: "fog",
+  verified: "neutral",
+  accepted: "sky",
+  approved: "lavender",
+  claimable: "lavender",
+  paid: "ink",
+  rejected: "cream",
 };
+
+export function stageTone(stage: Stage): BadgeTone {
+  return tones[stage];
+}
 
 export function StageBadge({ stage }: { stage: Stage }) {
   return (

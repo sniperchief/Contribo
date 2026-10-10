@@ -5,8 +5,9 @@ import { StageBadge } from "@/components/contributions/stage-badge";
 import { ContractUnavailable } from "@/components/tx/contract-unavailable";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BandCard } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { BountyStatusOnchain, contriboRewards } from "@/lib/contracts/config";
 import { contributionStage } from "@/lib/contributions";
 import { formatAmount, formatDate, shortHash } from "@/lib/format";
@@ -20,15 +21,14 @@ import { SubmitPullRequest, type DetectedPull } from "./submit-pull-request";
 
 export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   return (
-    <Container className="flex flex-col gap-8 py-12 sm:py-16">
-      <Suspense fallback={<p className="text-sm text-muted">Loading project…</p>}>
-        <ProjectContent params={params} />
-      </Suspense>
-    </Container>
+    <Suspense fallback={<Container className="py-14 text-base text-deep-teal">Loading project…</Container>}>
+      <ProjectContent params={params} />
+    </Suspense>
   );
 }
 
 const modelLabels = { bounty: "Bounties", funding_share: "Share of future funding", hybrid: "Bounties + funding share" };
+const modelTile = { bounty: "bg-terracotta", funding_share: "bg-lavender", hybrid: "bg-sky" };
 
 async function ProjectContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -48,64 +48,83 @@ async function ProjectContent({ params }: { params: Promise<{ slug: string }> })
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {project.status !== "published" && <Badge tone="warning">{project.status}</Badge>}
-          {project.onchain_project_id && <Badge tone="success">Onchain project #{project.onchain_project_id}</Badge>}
-        </div>
-        <h1 className="text-3xl font-bold text-ink sm:text-4xl">{project.name}</h1>
-        {project.tagline && <p className="max-w-2xl text-lg text-muted">{project.tagline}</p>}
-        {project.description && <p className="max-w-2xl whitespace-pre-line text-ink-soft">{project.description}</p>}
-        <div className="flex flex-wrap gap-3">
-          {project.website_url && (
-            <a href={project.website_url} target="_blank" rel="noreferrer" className={buttonStyles({ variant: "secondary", size: "sm" })}>
-              Website
-            </a>
-          )}
-          {viewer?.userId === project.owner_id && (
-            <Link href={`/founder/${project.id}`} className={buttonStyles({ size: "sm" })}>
-              Manage project
-            </Link>
-          )}
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <RewardTerms policy={published} />
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Repositories</CardTitle>
-              <CardDescription>Ownership verified through the GitHub API.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {repos.length === 0 ? (
-                <p className="text-sm text-muted">No verified repositories yet.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {repos.map((repo) => (
-                    <li key={repo.id}>
-                      <a
-                        href={`https://github.com/${repo.github_owner}/${repo.github_name}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-mono text-sm text-ink hover:underline"
-                      >
-                        {repo.github_owner}/{repo.github_name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+      <section className="pt-10 pb-8">
+        <Container className="flex flex-col gap-4">
+          <p className="text-sm text-deep-teal">
+            <Link href="/projects" className="font-medium text-ink">
+              Projects
+            </Link>{" "}
+            <span aria-hidden>/</span> {project.name}
+          </p>
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <span
+                className={`grid size-16 shrink-0 place-items-center rounded-[20px] text-heading-sm font-bold ${
+                  published ? modelTile[published.reward_model] : "bg-mist"
+                }`}
+              >
+                {project.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {project.status !== "published" && <Badge tone="cream">{project.status === "draft" ? "Draft" : "Archived"}</Badge>}
+                  {project.onchain_project_id && <Badge tone="plum">Onchain #{project.onchain_project_id}</Badge>}
+                </div>
+                <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">{project.name}</h1>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {project.website_url && (
+                <a href={project.website_url} target="_blank" rel="noreferrer" className={buttonStyles({ variant: "secondary", tone: "sky" })}>
+                  Website
+                </a>
               )}
-            </CardContent>
-          </Card>
-          <OnchainSummary project={project} publishedHash={published?.policy_hash ?? null} />
-        </div>
-      </div>
+              {viewer?.userId === project.owner_id && (
+                <Link href={`/founder/${project.id}`} className={buttonStyles()}>
+                  Manage project
+                </Link>
+              )}
+            </div>
+          </div>
+          {project.tagline && <p className="max-w-2xl text-body-lg text-deep-teal">{project.tagline}</p>}
+          {project.description && <p className="max-w-2xl text-base whitespace-pre-line text-deep-teal">{project.description}</p>}
+        </Container>
+      </section>
 
-      {project.status === "published" && (
-        <ContributePanel viewer={viewer} project={project} repos={repos} hasPolicy={!!published} />
-      )}
+      <section className="pb-20">
+        <Container className="flex flex-col gap-6">
+          <div className="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <RewardTerms policy={published} />
+            <div className="flex flex-col gap-6">
+              <BandCard tone="sky" label="Repositories" description="Ownership verified through the GitHub API.">
+                {repos.length === 0 ? (
+                  <p className="text-base text-deep-teal">No verified repositories yet.</p>
+                ) : (
+                  <ul className="flex flex-col">
+                    {repos.map((repo) => (
+                      <li key={repo.id} className="border-b border-mist py-3 last:border-b-0">
+                        <a
+                          href={`https://github.com/${repo.github_owner}/${repo.github_name}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-base font-bold text-ink"
+                        >
+                          {repo.github_owner}/{repo.github_name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </BandCard>
+              <OnchainSummary project={project} publishedHash={published?.policy_hash ?? null} />
+            </div>
+          </div>
+
+          {project.status === "published" && (
+            <ContributePanel viewer={viewer} project={project} repos={repos} hasPolicy={!!published} />
+          )}
+        </Container>
+      </section>
     </>
   );
 }
@@ -113,44 +132,40 @@ async function ProjectContent({ params }: { params: Promise<{ slug: string }> })
 function RewardTerms({ policy }: { policy: Tables<"reward_policies"> | null }) {
   if (!policy) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Reward terms</CardTitle>
-          <CardDescription>
-            This project has not published a reward policy yet. Contributions merged before a policy is published are not
-            eligible for rewards.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <BandCard tone="lavender" label="Reward terms">
+        <p className="text-base text-deep-teal">
+          This project has not published a reward policy yet. Contributions merged before a policy is published are not
+          eligible for rewards.
+        </p>
+      </BandCard>
     );
   }
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="accent">Version {policy.version}</Badge>
-          <Badge>{modelLabels[policy.reward_model]}</Badge>
-          {policy.contributor_pool_bps !== null && (
-            <Badge>{policy.contributor_pool_bps / 100}% contributor pool</Badge>
-          )}
-          <Badge>Paid in {policy.reward_asset === "MON" ? "MON" : shortHash(policy.reward_asset)}</Badge>
+    <BandCard tone="lavender" label={`Reward terms · v${policy.version}`} description={policy.summary ?? undefined}>
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
+          <h2 className="text-heading-sm">{policy.title}</h2>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="lavender">{modelLabels[policy.reward_model]}</Badge>
+            {policy.contributor_pool_bps !== null && <Badge>{policy.contributor_pool_bps / 100}% contributor pool</Badge>}
+            <Badge>Paid in {policy.reward_asset === "MON" ? "MON" : shortHash(policy.reward_asset)}</Badge>
+          </div>
         </div>
-        <CardTitle className="text-xl">{policy.title}</CardTitle>
-        {policy.summary && <CardDescription>{policy.summary}</CardDescription>}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {policy.terms && <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">{policy.terms}</p>}
+        {policy.terms && <p className="text-base whitespace-pre-line text-deep-teal">{policy.terms}</p>}
         {policy.eligibility && Object.keys(policy.eligibility as object).length > 0 && (
-          <pre className="overflow-x-auto rounded-md bg-surface-sunken p-3 font-mono text-xs text-ink-soft">
-            {JSON.stringify(policy.eligibility, null, 2)}
-          </pre>
+          <div className="flex flex-col gap-2">
+            <Eyebrow>Eligibility rules</Eyebrow>
+            <pre className="overflow-x-auto rounded-badge bg-fog px-5 py-4 font-mono text-sm text-ink">
+              {JSON.stringify(policy.eligibility, null, 2)}
+            </pre>
+          </div>
         )}
-        <p className="text-xs text-subtle">
-          Published {formatDate(policy.published_at)} · Policy hash <span className="font-mono">{shortHash(policy.policy_hash ?? "")}</span>.
-          Published policies cannot be edited.
+        <p className="border-t border-mist pt-4 text-caption text-deep-teal">
+          Published {formatDate(policy.published_at)} · Policy hash{" "}
+          <span className="font-mono">{shortHash(policy.policy_hash ?? "")}</span>. Published policies cannot be edited.
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </BandCard>
   );
 }
 
@@ -170,56 +185,61 @@ async function OnchainSummary({ project, publishedHash }: { project: Tables<"pro
   const data = contriboRewards && project.onchain_project_id ? await loadOnchainSummary(project.onchain_project_id) : null;
 
   let body: React.ReactNode;
+  let aside: React.ReactNode;
   if (!contriboRewards) {
     body = <ContractUnavailable />;
   } else if (!project.onchain_project_id) {
-    body = <p className="text-sm text-muted">Not registered onchain yet, so no rewards can be funded or paid.</p>;
+    body = <p className="text-base text-deep-teal">Not registered onchain yet, so no rewards can be funded or paid.</p>;
   } else if (!data) {
-    body = <p className="text-sm text-danger">Could not read onchain data from the Monad RPC. Try again shortly.</p>;
+    body = <p className="text-base text-danger">Could not read onchain data from the Monad RPC. Try again shortly.</p>;
   } else {
     const { onchain, asset, open } = data;
     const fmt = (v: bigint) => formatAmount(v, asset.decimals, asset.symbol);
+    const tiles = [
+      { label: "Available", value: fmt(onchain.balances.available), className: "bg-fog", labelClass: "text-deep-teal" },
+      { label: "In open bounties", value: fmt(onchain.balances.escrowed), className: "bg-cream", labelClass: "text-graphite" },
+      { label: "Owed to contributors", value: fmt(onchain.balances.committed), className: "bg-lavender", labelClass: "text-plum" },
+      { label: "Paid out", value: fmt(onchain.balances.totalPaid), className: "bg-sky", labelClass: "text-deep-teal" },
+    ];
+    aside = sameHash(publishedHash, onchain.policyHash) ? (
+      <Badge tone="lavender">Matches published terms</Badge>
+    ) : (
+      <Badge tone="cream">Policy hash differs</Badge>
+    );
     body = (
-      <div className="flex flex-col gap-3 text-sm">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <dt className="text-muted">Available</dt>
-          <dd className="text-right font-mono text-ink">{fmt(onchain.balances.available)}</dd>
-          <dt className="text-muted">In open bounties</dt>
-          <dd className="text-right font-mono text-ink">{fmt(onchain.balances.escrowed)}</dd>
-          <dt className="text-muted">Owed to contributors</dt>
-          <dd className="text-right font-mono text-ink">{fmt(onchain.balances.committed)}</dd>
-          <dt className="text-muted">Paid out</dt>
-          <dd className="text-right font-mono text-ink">{fmt(onchain.balances.totalPaid)}</dd>
-        </dl>
-        {sameHash(publishedHash, onchain.policyHash) ? (
-          <Badge tone="success" className="self-start">Onchain policy matches published terms</Badge>
-        ) : (
-          <Badge tone="warning" className="self-start">Onchain policy hash differs from published terms</Badge>
-        )}
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-2 gap-3">
+          {tiles.map((tile) => (
+            <div key={tile.label} className={`flex flex-col gap-1.5 rounded-badge px-4 py-3.5 ${tile.className}`}>
+              <p className={`text-caption font-medium ${tile.labelClass}`}>{tile.label}</p>
+              <p className="text-body-lg font-bold tracking-[-0.02em]">{tile.value}</p>
+            </div>
+          ))}
+        </div>
         {open.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <p className="font-medium text-ink">Open bounties</p>
-            <ul className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
+            <p className="text-base font-bold">Open bounties</p>
+            <ul className="overflow-hidden rounded-badge border border-mist">
               {open.map((b) => (
-                <li key={b.id.toString()} className="flex justify-between text-muted">
-                  <span>Bounty #{b.id.toString()} · until {formatDate(new Date(Number(b.deadline) * 1000).toISOString())}</span>
-                  <span className="font-mono text-ink">{fmt(b.amount)}</span>
+                <li key={b.id.toString()} className="flex items-center justify-between gap-3 border-b border-mist px-4 py-3 last:border-b-0">
+                  <span className="text-sm">
+                    <span className="font-bold">Bounty #{b.id.toString()}</span>
+                    <span className="text-deep-teal"> · until {formatDate(new Date(Number(b.deadline) * 1000).toISOString())}</span>
+                  </span>
+                  <Badge tone="terracotta">{fmt(b.amount)}</Badge>
                 </li>
               ))}
             </ul>
           </div>
         )}
-        <p className="text-xs text-subtle">Read live from the ContriboRewards contract.</p>
+        <p className="text-caption text-deep-teal">Read live from the ContriboRewards contract.</p>
       </div>
     );
   }
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Onchain rewards</CardTitle>
-      </CardHeader>
-      <CardContent>{body}</CardContent>
-    </Card>
+    <BandCard tone="plum" label="Onchain rewards" aside={aside}>
+      {body}
+    </BandCard>
   );
 }
 
@@ -236,17 +256,14 @@ async function ContributePanel({
 }) {
   if (!viewer) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Contribute</CardTitle>
-          <CardDescription>Sign in with GitHub to submit merged pull requests for this project.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href={`/login?next=${encodeURIComponent(`/projects/${project.slug}`)}`} className={buttonStyles()}>
-            Sign in with GitHub
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-start gap-4 rounded-card bg-paper p-6 sm:p-9">
+        <Eyebrow>Contribute</Eyebrow>
+        <h2 className="text-heading-sm">Sign in to submit your pull requests</h2>
+        <p className="text-base text-deep-teal">Sign in with GitHub to submit merged pull requests for this project.</p>
+        <Link href={`/login?next=${encodeURIComponent(`/projects/${project.slug}`)}`} className={buttonStyles()}>
+          Sign in with GitHub
+        </Link>
+      </div>
     );
   }
 
@@ -275,38 +292,37 @@ async function ContributePanel({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Contribute</CardTitle>
-        <CardDescription>
+    <section className="flex flex-col gap-6 rounded-card bg-paper p-6 sm:p-9">
+      <div className="flex flex-col gap-2">
+        <Eyebrow>Contribute</Eyebrow>
+        <h2 className="text-heading-sm">Submit your merged pull requests</h2>
+        <p className="max-w-3xl text-base text-deep-teal">
           Merged pull requests you authored{viewer.github ? ` as @${viewer.github.login}` : ""} in the verified repositories.
           Verification checks the repository, author and merge status with GitHub. It is evidence for review, not an
           automatic reward.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-5">
-        {!hasPolicy && <p className="text-sm text-warning">This project has no published reward policy yet.</p>}
-        {detectionError && <p className="text-sm text-muted">{detectionError}</p>}
-        <SubmitPullRequest projectId={project.id} detected={detected} />
-        {mine && mine.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-ink">Your submissions</p>
-            <ul className="divide-y divide-line rounded-md border border-line">
-              {mine.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <a href={c.pr_url} target="_blank" rel="noreferrer" className="truncate text-sm text-ink hover:underline">
-                    {c.pr_title ?? `Pull request #${c.pr_number}`}
-                  </a>
-                  <StageBadge stage={contributionStage(c)} />
-                </li>
-              ))}
-            </ul>
-            <Link href="/dashboard" className="text-sm text-accent hover:underline">
-              Track rewards and claims in your dashboard →
-            </Link>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+      {!hasPolicy && <p className="rounded-badge bg-cream px-5 py-3.5 text-sm text-graphite">This project has no published reward policy yet.</p>}
+      {detectionError && <p className="text-sm text-deep-teal">{detectionError}</p>}
+      <SubmitPullRequest projectId={project.id} detected={detected} />
+      {mine && mine.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <p className="text-base font-bold">Your submissions</p>
+          <ul className="overflow-hidden rounded-badge border border-mist">
+            {mine.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 border-b border-mist px-5 py-4 last:border-b-0">
+                <a href={c.pr_url} target="_blank" rel="noreferrer" className="truncate text-base font-bold text-ink">
+                  {c.pr_title ?? `Pull request #${c.pr_number}`}
+                </a>
+                <StageBadge stage={contributionStage(c)} />
+              </li>
+            ))}
+          </ul>
+          <Link href="/dashboard" className={buttonStyles({ variant: "ghost", arrow: true, className: "gap-2 self-start" })}>
+            Track rewards and claims in your dashboard
+          </Link>
+        </div>
+      )}
+    </section>
   );
 }

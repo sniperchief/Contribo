@@ -23,6 +23,23 @@ export class GitHubApiError extends Error {
   }
 }
 
+/** Subset of GET /users/{username}. */
+export type GitHubUser = {
+  id: number;
+  login: string;
+  name: string | null;
+  avatar_url: string;
+  html_url: string;
+  bio: string | null;
+  company: string | null;
+  location: string | null;
+  blog: string | null;
+  public_repos: number;
+  followers: number;
+  following: number;
+  created_at: string;
+};
+
 export type DetectedPull = {
   repoFullName: string;
   number: number;
@@ -78,6 +95,12 @@ export function createGitHubClient({ token = serverEnv.githubToken, fetch: fetch
       assertRepo(owner, name);
       if (!Number.isInteger(number) || number <= 0) throw new GitHubApiError("Invalid pull request.", 400);
       return request<GitHubPull>(`/repos/${owner}/${name}/pulls/${number}`);
+    },
+
+    /** Public profile of a GitHub user (GET /users/{username}). */
+    async getUser(login: string) {
+      if (!isValidRepoOwner(login)) throw new GitHubApiError("Invalid GitHub username.", 400);
+      return request<GitHubUser>(`/users/${login}`);
     },
 
     /** Merged pull requests by `author` in any of `repos` (owner/name), newest first. */

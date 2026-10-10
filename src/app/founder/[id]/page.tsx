@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Suspense } from "react";
 import { getAddress } from "viem";
 import { ContractUnavailable } from "@/components/tx/contract-unavailable";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BandCard } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { BountyStatusOnchain, contriboRewards } from "@/lib/contracts/config";
 import { contributionStage } from "@/lib/contributions";
+import { sameHash } from "@/lib/policy";
 import { createAdminClient } from "@/lib/server/admin";
 import {
   readAssetInfo,
@@ -27,23 +29,9 @@ import { Review, type ReviewRow } from "./review";
 
 export default function ManageProjectPage({ params }: PageProps<"/founder/[id]">) {
   return (
-    <Container className="flex flex-col gap-8 py-12 sm:py-16">
-      <Suspense fallback={<p className="text-sm text-muted">Loading project…</p>}>
-        <ManageContent params={params} />
-      </Suspense>
-    </Container>
-  );
-}
-
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <Suspense fallback={<Container className="py-14 text-base text-deep-teal">Loading project…</Container>}>
+      <ManageContent params={params} />
+    </Suspense>
   );
 }
 
@@ -52,9 +40,11 @@ async function ManageContent({ params }: { params: Promise<{ id: string }> }) {
   const viewer = await getViewer();
   if (!viewer) {
     return (
-      <Link href={`/login?next=/founder/${id}`} className={buttonStyles({ className: "self-start" })}>
-        Sign in with GitHub
-      </Link>
+      <Container className="py-14">
+        <Link href={`/login?next=/founder/${id}`} className={buttonStyles()}>
+          Sign in with GitHub
+        </Link>
+      </Container>
     );
   }
   const admin = createAdminClient();
@@ -121,6 +111,7 @@ async function ManageContent({ params }: { params: Promise<{ id: string }> }) {
     verifiedWallet: c.profiles?.wallet_verified_at ? c.profiles.wallet_address : null,
     policyVersion: c.reward_policies?.version ?? null,
   }));
+  const pendingReview = reviewRows.filter((r) => r.stage === "verified" || r.stage === "accepted").length;
 
   const snapshot: OnchainSnapshot | null = onchain && {
     owner: onchain.owner,
@@ -131,71 +122,145 @@ async function ManageContent({ params }: { params: Promise<{ id: string }> }) {
       Object.entries(onchain.balances).map(([k, v]) => [k, v.toString()]),
     ) as OnchainSnapshot["balances"],
   };
+  const policyMatches = !!snapshot && sameHash(published?.policy_hash, snapshot.policyHash);
+
+  const menu = [
+    ...(access.isOwner
+      ? [
+          { href: "#details", label: "Project details" },
+          { href: "#repos", label: "Repositories" },
+          { href: "#policy", label: "Reward policy" },
+          { href: "#onchain", label: "Onchain" },
+        ]
+      : []),
+    { href: "#review", label: "Review contributions", count: pendingReview },
+  ];
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={project.status === "published" ? "success" : "neutral"}>{project.status}</Badge>
-          {access.isOwner ? <Badge tone="accent">Owner</Badge> : <Badge tone="accent">Approver</Badge>}
-        </div>
-        <h1 className="text-3xl font-bold text-ink">{project.name}</h1>
-        <Link href={`/projects/${project.slug}`} className="text-sm text-accent hover:underline">
-          View public page →
-        </Link>
-      </div>
+      <section className="pt-10 pb-8">
+        <Container className="flex flex-col gap-4">
+          <p className="text-sm text-deep-teal">
+            <Link href="/founder" className="font-medium text-ink">
+              Your projects
+            </Link>{" "}
+            <span aria-hidden>/</span> {project.name}
+          </p>
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <span className="grid size-16 shrink-0 place-items-center rounded-[20px] bg-sky text-heading-sm font-bold">
+                {project.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone={project.status === "published" ? "sky" : "neutral"}>
+                    {project.status === "published" ? "Published" : project.status === "draft" ? "Draft" : "Archived"}
+                  </Badge>
+                  <Badge tone="lavender">{access.isOwner ? "Owner" : "Approver"}</Badge>
+                </div>
+                <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">{project.name}</h1>
+              </div>
+            </div>
+            <Link href={`/projects/${project.slug}`} className={buttonStyles({ variant: "ghost", arrow: true, className: "gap-2" })}>
+              View public page
+            </Link>
+          </div>
+        </Container>
+      </section>
 
-      {access.isOwner && (
-        <>
-          <Section title="Project details">
-            <ProjectSettings project={project} />
-          </Section>
-          <Section title="Repositories" description="Contributions are accepted only from repositories verified through the GitHub API.">
-            <Repositories
-              projectId={project.id}
-              repositories={project.project_repositories}
-              githubLogin={viewer.github?.login ?? null}
-            />
-          </Section>
-          <Section
-            title="Reward policy"
-            description="Publish explicit terms before contributors start. Published versions are frozen and anchored onchain by hash."
-          >
-            <PolicyEditor projectId={project.id} policies={policies} onchainAsset={onchain?.asset.toLowerCase() ?? project.onchain_asset} />
-          </Section>
-          <Section title="Onchain" description="Registration, funding, bounties and approvers in the ContriboRewards contract.">
-            {!contriboRewards ? (
-              <ContractUnavailable />
-            ) : chainError ? (
-              <p className="text-sm text-danger">Could not read the contract from the Monad RPC. Try again shortly.</p>
-            ) : (
-              <OnchainPanel
-                projectId={project.id}
-                onchainProjectId={project.onchain_project_id}
-                verifiedWallet={viewer.wallet}
-                publishedPolicy={published ? { hash: published.policy_hash, rewardAsset: published.reward_asset } : null}
-                onchain={snapshot}
-                asset={asset}
-                bounties={bounties}
-                approvers={approvers}
-              />
+      <section className="pb-20">
+        <Container className="flex flex-wrap items-start gap-8">
+          <nav aria-label="On this page" className="flex max-w-full flex-[1_1_220px] flex-col gap-1 rounded-card bg-paper p-6 lg:sticky lg:top-6">
+            <Eyebrow className="mb-2">On this page</Eyebrow>
+            {menu.map((item) => (
+              <a key={item.href} href={item.href} className="flex items-center justify-between rounded-control px-3 py-2.5 text-[15px] font-medium text-ink hover:bg-fog">
+                {item.label}
+                {"count" in item && item.count ? <Badge tone="ink" className="px-2 py-0.5">{item.count}</Badge> : null}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex min-w-0 flex-[999_1_640px] flex-col gap-6">
+            {access.isOwner && (
+              <>
+                <section id="details" className="flex scroll-mt-6 flex-col gap-6 rounded-card bg-paper p-6 sm:p-9">
+                  <div className="flex flex-col gap-1.5">
+                    <Eyebrow>Project details</Eyebrow>
+                    <h2 className="text-heading-sm">How your project appears</h2>
+                  </div>
+                  <ProjectSettings project={project} />
+                </section>
+
+                <BandCard
+                  id="repos"
+                  tone="sky"
+                  label="Repositories"
+                  description="Contributions are accepted only from repositories verified through the GitHub API."
+                >
+                  <Repositories projectId={project.id} repositories={project.project_repositories} githubLogin={viewer.github?.login ?? null} />
+                </BandCard>
+
+                <BandCard
+                  id="policy"
+                  tone="lavender"
+                  label="Reward policy"
+                  description="Publish explicit terms before contributors start. Published versions are frozen and anchored onchain by hash."
+                >
+                  <PolicyEditor projectId={project.id} policies={policies} onchainAsset={onchain?.asset.toLowerCase() ?? project.onchain_asset} />
+                </BandCard>
+
+                <BandCard
+                  id="onchain"
+                  tone="plum"
+                  label={project.onchain_project_id ? `Onchain · project #${project.onchain_project_id}` : "Onchain"}
+                  description="Registration, funding, bounties and approvers in the ContriboRewards contract."
+                  aside={
+                    snapshot && published?.policy_hash ? (
+                      <Badge tone={policyMatches ? "lavender" : "cream"} className="py-2">
+                        {policyMatches ? "Policy hash matches the published policy" : "Policy hash differs from the published policy"}
+                      </Badge>
+                    ) : undefined
+                  }
+                >
+                  {!contriboRewards ? (
+                    <ContractUnavailable />
+                  ) : chainError ? (
+                    <p className="text-base text-danger">Could not read the contract from the Monad RPC. Try again shortly.</p>
+                  ) : (
+                    <OnchainPanel
+                      projectId={project.id}
+                      onchainProjectId={project.onchain_project_id}
+                      verifiedWallet={viewer.wallet}
+                      publishedPolicy={published ? { hash: published.policy_hash, rewardAsset: published.reward_asset } : null}
+                      onchain={snapshot}
+                      asset={asset}
+                      bounties={bounties}
+                      approvers={approvers}
+                    />
+                  )}
+                </BandCard>
+              </>
             )}
-          </Section>
-        </>
-      )}
 
-      <Section
-        title="Review contributions"
-        description="Verified pull requests are evidence only. Decide a reward, then approve it onchain from an owner or approver wallet."
-      >
-        {!contriboRewards && <div className="mb-4"><ContractUnavailable /></div>}
-        <Review
-          rows={reviewRows}
-          asset={asset}
-          openBounties={bounties.filter((b) => b.status === BountyStatusOnchain.Open)}
-          onchainReady={!!contriboRewards && !!snapshot}
-        />
-      </Section>
+            <section id="review" className="flex scroll-mt-6 flex-col gap-5 rounded-card bg-paper p-6 sm:p-9">
+              <div className="flex flex-col gap-1.5">
+                <Eyebrow>Review contributions</Eyebrow>
+                <p className="text-base text-deep-teal">
+                  Verified pull requests are evidence only. Decide a reward, then approve it onchain from an owner or approver
+                  wallet.
+                </p>
+              </div>
+              {!contriboRewards && <ContractUnavailable />}
+              <Review
+                rows={reviewRows}
+                asset={asset}
+                openBounties={bounties.filter((b) => b.status === BountyStatusOnchain.Open)}
+                onchainReady={!!contriboRewards && !!snapshot}
+              />
+            </section>
+          </div>
+        </Container>
+      </section>
     </>
   );
 }

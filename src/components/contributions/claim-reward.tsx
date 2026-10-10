@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Hex } from "viem";
-import { useConfig, useConnection } from "wagmi";
+import { useConfig, useAccount } from "wagmi";
 import { simulateContract, writeContract } from "wagmi/actions";
 import { syncContribution } from "@/app/contributions/actions";
 import { StageBadge } from "@/components/contributions/stage-badge";
 import { TxStatus } from "@/components/tx/tx-status";
 import { useContractTx } from "@/components/tx/use-contract-tx";
+import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/field";
 import { contriboRewards } from "@/lib/contracts/config";
@@ -29,7 +30,7 @@ export function ClaimReward({
 }) {
   const router = useRouter();
   const config = useConfig();
-  const { address } = useConnection();
+  const { address } = useAccount();
   const tx = useContractTx();
   const [syncError, setSyncError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -60,23 +61,30 @@ export function ClaimReward({
 
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="flex items-center gap-2">
-        <StageBadge stage={canClaim ? "claimable" : "approved"} />
+      <div className="flex items-center gap-2.5">
         {canClaim && (
-          <Button size="sm" variant="accent" onClick={claim} disabled={tx.busy || tx.state.phase === "confirmed"}>
-            Claim
+          <Button size="sm" onClick={claim} disabled={tx.busy || tx.state.phase === "confirmed"}>
+            Claim reward
           </Button>
         )}
+        <StageBadge stage={canClaim ? "claimable" : "approved"} />
       </div>
-      {!canClaim && <p className="text-xs text-muted">Connect {shortAddress(contributorWallet)} to claim.</p>}
-      <TxStatus state={tx.state} className="text-right text-xs" />
+      {!canClaim && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <p className="text-caption text-deep-teal">
+            {address ? "Switch to" : "Connect"} {shortAddress(contributorWallet)} to claim.
+          </p>
+          {!address && <ConnectWalletButton />}
+        </div>
+      )}
+      <TxStatus state={tx.state} className="text-right text-caption" />
       <FormMessage error={syncError} />
     </div>
   );
 }
 
 /** Re-reads a contribution's onchain status (e.g. after an approver confirmed an approval). */
-export function SyncContribution({ contributionId, label = "Check onchain status" }: { contributionId: string; label?: string }) {
+export function SyncContribution({ contributionId, label = "Check status" }: { contributionId: string; label?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +92,9 @@ export function SyncContribution({ contributionId, label = "Check onchain status
     <div className="flex flex-col items-end gap-1">
       <Button
         size="sm"
-        variant="ghost"
+        variant="secondary"
+        tone="sky"
+        className="px-3.5 text-sm"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {

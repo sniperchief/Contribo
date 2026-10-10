@@ -1,60 +1,97 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { ClaimReward, SyncContribution } from "@/components/contributions/claim-reward";
-import { StageBadge } from "@/components/contributions/stage-badge";
+import { StageBadge, stageTone } from "@/components/contributions/stage-badge";
 import { ContractUnavailable } from "@/components/tx/contract-unavailable";
+import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { cn } from "@/lib/cn";
 import { contriboRewards } from "@/lib/contracts/config";
 import { contributionStage, stageDescriptions, stageLabels, type ContributionStage } from "@/lib/contributions";
 import { formatAmount, formatDate } from "@/lib/format";
 import { readAssetInfo, type AssetInfo } from "@/lib/server/chain";
 import { getViewer } from "@/lib/server/viewer";
-import { WalletLink } from "./wallet-link";
+import { WalletLink } from "@/components/wallet/wallet-link";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default function DashboardPage() {
   return (
-    <Container className="flex flex-col gap-8 py-12 sm:py-16">
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-accent">Contributor dashboard</p>
-        <h1 className="text-3xl font-bold text-ink">Your contributions and rewards</h1>
-      </div>
-      <Suspense fallback={<p className="text-sm text-muted">Loading your dashboard…</p>}>
+    <>
+      <section className="pt-14 pb-8">
+        <Container className="flex flex-wrap items-end justify-between gap-6">
+          <div className="flex flex-col gap-3.5">
+            <Eyebrow>Contributor dashboard</Eyebrow>
+            <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">Your contributions and rewards</h1>
+          </div>
+          <Link href="/projects" className={buttonStyles({ size: "lg" })}>
+            Browse projects
+          </Link>
+        </Container>
+      </section>
+      <Suspense fallback={<Container className="pb-20 text-base text-deep-teal">Loading your dashboard…</Container>}>
         <DashboardContent />
       </Suspense>
-    </Container>
+    </>
   );
 }
 
 const STAGE_ORDER: ContributionStage[] = ["approved", "accepted", "verified", "submitted", "paid", "rejected"];
 
+function IdentityCard({ icon, tint, title, description, children }: { icon: ReactNode; tint: string; title: string; description: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-4 rounded-card bg-paper p-6 sm:p-9">
+      <div className="flex items-center gap-3">
+        <span className={cn("grid size-11 shrink-0 place-items-center rounded-[14px]", tint)}>{icon}</span>
+        <h2 className="text-heading-sm">{title}</h2>
+      </div>
+      <p className="text-base text-deep-teal">{description}</p>
+      {children}
+    </div>
+  );
+}
+
+const githubIcon = (
+  <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--deep-teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />
+  </svg>
+);
+
+const walletIcon = (
+  <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--plum)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="6" width="18" height="13" rx="3" />
+    <path d="M3 10h18M16 14.5h2" />
+  </svg>
+);
+
 async function DashboardContent() {
   const viewer = await getViewer();
   if (!viewer) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign in to see your dashboard</CardTitle>
-          <CardDescription>Contribo uses your GitHub account to verify the pull requests you contribute.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Container className="pb-20">
+        <div className="flex flex-col items-start gap-4 rounded-card bg-paper p-9">
+          <h2 className="text-heading-sm">Sign in to see your dashboard</h2>
+          <p className="text-base text-deep-teal">Contribo uses your GitHub account to verify the pull requests you contribute.</p>
           <Link href="/login?next=/dashboard" className={buttonStyles()}>
             Sign in with GitHub
           </Link>
-        </CardContent>
-      </Card>
+        </div>
+      </Container>
     );
   }
 
-  const { data: contributions } = await viewer.supabase
-    .from("contributions")
-    .select("*, projects!inner(id, slug, name, onchain_project_id, onchain_asset)")
-    .eq("contributor_id", viewer.userId)
-    .order("created_at", { ascending: false });
+  const [{ data: contributions }, { data: profile }] = await Promise.all([
+    viewer.supabase
+      .from("contributions")
+      .select("*, projects!inner(id, slug, name, onchain_project_id, onchain_asset)")
+      .eq("contributor_id", viewer.userId)
+      .order("created_at", { ascending: false }),
+    viewer.supabase.from("profiles").select("skills").eq("id", viewer.userId).maybeSingle(),
+  ]);
+  const needsSkills = Array.isArray(profile?.skills) && profile.skills.length === 0;
 
   const assets = new Map<string, AssetInfo>();
   if (contriboRewards) {
@@ -73,105 +110,129 @@ async function DashboardContent() {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>GitHub</CardTitle>
-            <CardDescription>Pull requests are verified against this linked account.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm">
-            {viewer.github ? (
-              <p className="text-ink">
-                Linked as{" "}
-                <a href={`https://github.com/${viewer.github.login}`} target="_blank" rel="noreferrer" className="font-medium hover:underline">
-                  @{viewer.github.login}
-                </a>{" "}
-                <span className="text-subtle">(GitHub ID {viewer.github.userId})</span>
+      <section className="pb-6">
+        <Container className="grid gap-6 md:grid-cols-2">
+          <IdentityCard icon={githubIcon} tint="bg-sky" title="GitHub" description="Pull requests are verified against this linked account.">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-badge bg-fog px-5 py-4">
+              {viewer.github ? (
+                <>
+                  <span className="text-base">
+                    Linked as{" "}
+                    <a href={`https://github.com/${viewer.github.login}`} target="_blank" rel="noreferrer" className="font-bold">
+                      @{viewer.github.login}
+                    </a>
+                  </span>
+                  <span className="text-[13px] text-deep-teal">GitHub ID {viewer.github.userId}</span>
+                </>
+              ) : (
+                <span className="text-base text-warning">No GitHub identity found. Sign out and sign in with GitHub again.</span>
+              )}
+            </div>
+          </IdentityCard>
+          <IdentityCard icon={walletIcon} tint="bg-lavender" title="Payout wallet" description="Approved rewards are reserved for this wallet onchain.">
+            <WalletLink userId={viewer.userId} linkedWallet={viewer.wallet} />
+          </IdentityCard>
+        </Container>
+      </section>
+
+      {needsSkills && (
+        <Container className="pb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-card bg-lavender px-6 py-5 sm:px-9">
+            <div className="flex flex-col gap-1">
+              <Eyebrow className="text-plum">Next step</Eyebrow>
+              <p className="text-base text-plum">Pick the tech stacks you&apos;re good at so founders can find you.</p>
+            </div>
+            <Link href="/profile#skills" className={buttonStyles({ className: "gap-2" })}>
+              Pick your skills
+            </Link>
+          </div>
+        </Container>
+      )}
+
+      {!contriboRewards && (
+        <Container className="pb-6">
+          <ContractUnavailable />
+        </Container>
+      )}
+
+      <section className="pb-20">
+        <Container>
+          <div className="flex flex-col gap-6 rounded-card bg-paper p-6 sm:p-9">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Eyebrow>Contributions</Eyebrow>
+                <h2 className="text-heading-sm">Your pull requests, by stage</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {counts
+                  .filter((c) => c.count > 0)
+                  .map((c) => (
+                    <Badge key={c.stage} tone={stageTone(c.stage)} title={stageDescriptions[c.stage]} className="px-3.5 py-2">
+                      {stageLabels[c.stage]} · {c.count}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+
+            {rows.length === 0 ? (
+              <p className="text-base text-deep-teal">
+                Nothing yet.{" "}
+                <Link href="/projects" className="font-medium underline underline-offset-2">
+                  Browse projects
+                </Link>{" "}
+                and submit a merged pull request.
               </p>
             ) : (
-              <p className="text-warning">No GitHub identity found. Sign out and sign in with GitHub again.</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Payout wallet</CardTitle>
-            <CardDescription>Approved rewards are reserved for this wallet onchain.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WalletLink userId={viewer.userId} linkedWallet={viewer.wallet} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {!contriboRewards && <ContractUnavailable />}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Contributions</CardTitle>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-            {counts
-              .filter((c) => c.count > 0)
-              .map((c) => (
-                <span key={c.stage} title={stageDescriptions[c.stage]}>
-                  {stageLabels[c.stage]}: <span className="font-medium text-ink">{c.count}</span>
-                </span>
-              ))}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {rows.length === 0 ? (
-            <p className="text-sm text-muted">
-              Nothing yet. <Link href="/projects" className="text-accent hover:underline">Browse projects</Link> and submit
-              a merged pull request.
-            </p>
-          ) : (
-            <ul className="divide-y divide-line rounded-md border border-line">
-              {rows.map((c) => {
-                const asset = c.projects.onchain_asset ? assets.get(c.projects.onchain_asset) : undefined;
-                return (
-                  <li key={c.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <a href={c.pr_url} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium text-ink hover:underline">
-                        {c.pr_title ?? `Pull request #${c.pr_number}`}
-                      </a>
-                      <p className="text-xs text-muted">
-                        <Link href={`/projects/${c.projects.slug}`} className="hover:underline">{c.projects.name}</Link> · merged{" "}
-                        {formatDate(c.merged_at)}
-                        {c.reward_amount && (
-                          <>
-                            {" "}· reward{" "}
-                            <span className="font-mono text-ink">
-                              {asset ? formatAmount(c.reward_amount, asset.decimals, asset.symbol) : `${c.reward_amount} (base units)`}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="shrink-0">
-                      {c.stage === "approved" && contriboRewards && c.projects.onchain_project_id && c.onchain_ref && c.contributor_wallet ? (
-                        <ClaimReward
-                          contributionId={c.id}
-                          onchainProjectId={c.projects.onchain_project_id}
-                          onchainRef={c.onchain_ref}
-                          contributorWallet={c.contributor_wallet}
-                        />
-                      ) : c.stage === "accepted" && contriboRewards ? (
-                        <div className="flex items-center gap-2">
-                          <StageBadge stage="accepted" />
-                          <SyncContribution contributionId={c.id} />
-                        </div>
-                      ) : (
-                        <StageBadge stage={c.stage} />
+              <ul className="overflow-hidden rounded-badge border border-mist">
+                {rows.map((c) => {
+                  const asset = c.projects.onchain_asset ? assets.get(c.projects.onchain_asset) : undefined;
+                  return (
+                    <li
+                      key={c.id}
+                      className={cn(
+                        "flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-mist px-6 py-5 last:border-b-0",
+                        c.stage === "approved" ? "bg-lavender/15" : "bg-paper",
                       )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                    >
+                      <div className="min-w-0 flex-[1_1_360px]">
+                        <a href={c.pr_url} target="_blank" rel="noreferrer" className="block truncate text-base font-bold">
+                          {c.pr_title ?? `Pull request #${c.pr_number}`}
+                        </a>
+                        <p className="mt-1 text-[13px] text-deep-teal">
+                          <Link href={`/projects/${c.projects.slug}`} className="text-deep-teal underline underline-offset-2">
+                            {c.projects.name}
+                          </Link>{" "}
+                          · merged {formatDate(c.merged_at)}
+                          {c.reward_amount &&
+                            ` · reward ${asset ? formatAmount(c.reward_amount, asset.decimals, asset.symbol) : `${c.reward_amount} (base units)`}`}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        {c.stage === "approved" && contriboRewards && c.projects.onchain_project_id && c.onchain_ref && c.contributor_wallet ? (
+                          <ClaimReward
+                            contributionId={c.id}
+                            onchainProjectId={c.projects.onchain_project_id}
+                            onchainRef={c.onchain_ref}
+                            contributorWallet={c.contributor_wallet}
+                          />
+                        ) : c.stage === "accepted" && contriboRewards ? (
+                          <div className="flex items-center gap-2.5">
+                            <SyncContribution contributionId={c.id} />
+                            <StageBadge stage="accepted" />
+                          </div>
+                        ) : (
+                          <StageBadge stage={c.stage} />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <p className="text-sm text-deep-teal">Missing a PR? Open its project page and submit the merged pull request link.</p>
+          </div>
+        </Container>
+      </section>
     </>
   );
 }

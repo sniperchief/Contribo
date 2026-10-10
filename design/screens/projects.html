@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contribo — Explore projects</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5f5f5}
+a{color:#06040e}a:hover{color:#1f1738}
+</style>
+</helmet>
+<div style="font-family: Manrope, ui-sans-serif, system-ui, sans-serif; color: #06040e; background: #f5f5f5; min-height: 1900px; min-width: 0; overflow-x: hidden">
+
+<!-- APP HEADER -->
+<header style="background: #ffffff; border-bottom: 1px solid #e1edf2; padding: 0 clamp(16px, 4vw, 40px)">
+<nav aria-label="Main" style="max-width: 1200px; margin: 0 auto; padding: 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px">
+<a href="landing.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
+<img src="../../src/assets/brand/contribo-mark.png" alt="" style="width: 30px; height: 23px; object-fit: contain">
+<span style="font-size: 22px; font-weight: 700; letter-spacing: -0.03em">contribo</span>
+</a>
+<div style="display: flex; flex-wrap: wrap; gap: 0 32px; font-size: 16px; font-weight: 500; flex: 1 1 auto">
+<a href="projects.html" aria-current="page" style="text-decoration: none; padding: 12px 0; border-bottom: 2px solid #06040e">Projects</a>
+<a href="dashboard.html" style="text-decoration: none; padding: 12px 0">Dashboard</a>
+<a href="founder.html" style="text-decoration: none; padding: 12px 0">Founder</a>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" style="font: inherit; font-size: 14px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 8px; padding: 0 16px; height: 44px; cursor: pointer">Monad testnet · 0x3f…a91c</button>
+<span aria-label="Your account" role="img" style="width: 44px; height: 44px; border-radius: 22px; background: #cbb0eb; display: flex; align-items: center; justify-content: center; font-weight: 700">A</span>
+</div>
+</nav>
+</header>
+
+<!-- PAGE TITLE -->
+<section style="padding: 56px clamp(16px, 4vw, 40px) 32px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 640px">
+<p style="margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase">Explore</p>
+<h1 style="margin: 0; font-size: 40px; line-height: 1.09; font-weight: 700; letter-spacing: -0.02em">Projects rewarding contributors</h1>
+<p style="margin: 0; font-size: 18px; line-height: 1.5; color: #10242f">Every project here has verified repos and a published reward policy. Pick one and start contributing.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search projects</label>
+<div style="display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #e1edf2; border-radius: 8px; padding: 0 14px; height: 48px; box-sizing: border-box; width: 320px; max-width: 100%">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10242f" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input id="q" type="search" placeholder="Search projects, repos or languages" style="border: 0; background: transparent; font: inherit; font-size: 15px; color: #06040e; outline: none; width: 100%; min-width: 0">
+</div>
+<label for="sort" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sort</label>
+<select id="sort" style="font: inherit; font-size: 15px; font-weight: 500; height: 48px; padding: 0 14px; border: 1px solid #e1edf2; border-radius: 8px; background: #ffffff; color: #06040e">
+<option>Most open bounties</option>
+<option>Largest pool</option>
+<option>Newest</option>
+</select>
+</div>
+</div>
+</section>
+
+<!-- CONTENT -->
+<section style="padding: 0 clamp(16px, 4vw, 40px) 80px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+<!-- Filters -->
+<aside aria-label="Filters" style="flex: 1 1 240px; max-width: 100%; background: #ffffff; border-radius: 24px; padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px">Reward model</legend>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 32px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #06040e">Bounty</label>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 32px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #06040e">Contributor pool</label>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 32px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #06040e">Hybrid</label>
+</fieldset>
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px">Reward asset</legend>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 32px"><input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #06040e">MON</label>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 32px"><input type="checkbox" style="width: 18px; height: 18px; accent-color: #06040e">ERC-20 tokens</label>
+</fieldset>
+<fieldset style="border: 0; margin: 0; padding: 0">
+<legend style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px">Language</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="font: inherit; font-size: 12px; font-weight: 500; background: #06040e; color: #ffffff; border: 0; border-radius: 16px; padding: 8px 16px; min-height: 36px; cursor: pointer">All</button>
+<button type="button" style="font: inherit; font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 16px; padding: 8px 16px; min-height: 36px; cursor: pointer">Solidity</button>
+<button type="button" style="font: inherit; font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 16px; padding: 8px 16px; min-height: 36px; cursor: pointer">TypeScript</button>
+<button type="button" style="font: inherit; font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 16px; padding: 8px 16px; min-height: 36px; cursor: pointer">Rust</button>
+<button type="button" style="font: inherit; font-size: 12px; font-weight: 500; background: #e1edf2; color: #10242f; border: 0; border-radius: 16px; padding: 8px 16px; min-height: 36px; cursor: pointer">Go</button>
+</div>
+</fieldset>
+<label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 500; padding-top: 20px; border-top: 1px solid #e1edf2; min-height: 44px">Has open bounties<input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #06040e"></label>
+</aside>
+
+<!-- Results -->
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+<p style="margin: 0; font-size: 16px; color: #10242f"><span style="font-weight: 700; color: #06040e">6 projects</span> match your filters</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="font-size: 12px; font-weight: 500; background: #a5c8d8; color: #10242f; padding: 8px 16px; border-radius: 16px">Hybrid</span>
+<span style="font-size: 12px; font-weight: 500; background: #e39a4d; color: #06040e; padding: 8px 16px; border-radius: 16px">Bounty</span>
+<span style="font-size: 12px; font-weight: 500; background: #cbb0eb; color: #1f1738; padding: 8px 16px; border-radius: 16px">Pool</span>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 20px">
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+<a href="#project" style="background: #ffffff; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 14px; text-decoration: none; color: #06040e">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span style="width: 48px; height: 48px; border-radius: 16px; background: {{p.bg}}; color: {{p.fg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; flex: none">{{p.initial}}</span>
+<div style="min-width: 0"><p style="margin: 0; font-size: 18px; font-weight: 700">{{p.name}}</p><p style="margin: 2px 0 0; font-size: 13px; color: #10242f">{{p.repos}}</p></div>
+</div>
+<span style="font-size: 12px; font-weight: 500; background: {{p.bg}}; color: {{p.fg}}; padding: 6px 14px; border-radius: 16px; flex: none">{{p.model}}</span>
+</div>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #10242f; flex: 1">{{p.desc}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{p.langs}}" as="l" hint-placeholder-count="2"><span style="font-size: 12px; font-weight: 500; background: #f5f5f5; color: #10242f; padding: 6px 12px; border-radius: 16px">{{l}}</span></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 16px; border-top: 1px solid #e1edf2">
+<div><p style="margin: 0; font-size: 12px; color: #10242f">Open bounties</p><p style="margin: 4px 0 0; font-size: 16px; font-weight: 700">{{p.open}}</p></div>
+<div><p style="margin: 0; font-size: 12px; color: #10242f">Pool available</p><p style="margin: 4px 0 0; font-size: 16px; font-weight: 700">{{p.pool}}</p></div>
+<div><p style="margin: 0; font-size: 12px; color: #10242f">Contributors</p><p style="margin: 4px 0 0; font-size: 16px; font-weight: 700">{{p.people}}</p></div>
+</div>
+<span style="font-size: 16px; font-weight: 500">View project →</span>
+</a>
+</sc-for>
+</div>
+
+<nav aria-label="Pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 12px">
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; width: 44px; height: 44px; border-radius: 8px; border: 0; background: #06040e; color: #ffffff; cursor: pointer">1</button>
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; width: 44px; height: 44px; border-radius: 8px; border: 1px solid #e1edf2; background: #ffffff; color: #06040e; cursor: pointer">2</button>
+<button type="button" style="font: inherit; font-size: 15px; font-weight: 500; height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid #e1edf2; background: #ffffff; color: #06040e; cursor: pointer">Next →</button>
+</nav>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+renderVals() {
+const sky = { bg: '#a5c8d8', fg: '#10242f' };
+const ter = { bg: '#e39a4d', fg: '#06040e' };
+const lav = { bg: '#cbb0eb', fg: '#1f1738' };
+return {
+projects: [
+{ ...sky, initial: 'M', name: 'monad-sdk', repos: 'example-org · 3 verified repos', model: 'Hybrid', desc: 'TypeScript client for Monad apps, with typed contracts and batched RPC calls.', langs: ['TypeScript', 'Node'], open: '8', pool: '1,200 MON', people: '24' },
+{ ...ter, initial: 'V', name: 'vault-core', repos: 'example-org · 1 verified repo', model: 'Bounty', desc: 'Token treasury vault contracts with a strong focus on test coverage.', langs: ['Solidity'], open: '5', pool: '—', people: '9' },
+{ ...lav, initial: 'I', name: 'indexer', repos: 'example-org · 2 verified repos', model: 'Pool', desc: 'Fast block and event indexer that powers explorers and dashboards.', langs: ['Rust', 'Postgres'], open: '0', pool: '3,000 MON', people: '15' },
+{ ...sky, initial: 'W', name: 'wallet-kit', repos: 'example-org · 2 verified repos', model: 'Hybrid', desc: 'Drop-in wallet connection components for React apps on Monad.', langs: ['React', 'TypeScript'], open: '4', pool: '800 MON', people: '11' },
+{ ...ter, initial: 'D', name: 'dev-docs', repos: 'example-org · 1 verified repo', model: 'Bounty', desc: 'Guides, tutorials and API references for Monad developers.', langs: ['Docs', 'MDX'], open: '12', pool: '—', people: '31' },
+{ ...lav, initial: 'O', name: 'oracle-relay', repos: 'example-org · 1 verified repo', model: 'Pool', desc: 'Lightweight price relay service with signed updates.', langs: ['Go'], open: '0', pool: '500 MON', people: '6' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

@@ -69,8 +69,8 @@ export type OnchainBounty = {
   contributionRef: Hex;
 };
 
-/** Bounties of a project, scanning the most recent `limit` bounty IDs. */
-export async function readProjectBounties(projectId: bigint, limit = 200): Promise<OnchainBounty[]> {
+/** The most recent `limit` bounties across all projects. */
+async function readRecentBounties(limit = 200) {
   const { address, abi } = requireContract();
   const count = await publicClient.readContract({ address, abi, functionName: "bountyCount" });
   const ids: bigint[] = [];
@@ -81,10 +81,57 @@ export async function readProjectBounties(projectId: bigint, limit = 200): Promi
     allowFailure: false,
     contracts: ids.map((id) => ({ address, abi, functionName: "getBounty" as const, args: [id] as const })),
   });
-  return bounties
-    .map((bounty, index) => ({ ...bounty, id: ids[index], deadline: BigInt(bounty.deadline) }))
+  return bounties.map((bounty, index) => ({ ...bounty, id: ids[index], deadline: BigInt(bounty.deadline) }));
+}
+
+/** Bounties of a project, scanning the most recent `limit` bounty IDs. */
+export async function readProjectBounties(projectId: bigint, limit = 200): Promise<OnchainBounty[]> {
+  return (await readRecentBounties(limit))
     .filter((bounty) => bounty.projectId === projectId)
     .map(({ id, amount, deadline, status, contributionRef }) => ({ id, amount, deadline, status, contributionRef }));
+}
+
+export type ProjectOverview = { available: bigint; openBounties: number };
+
+/** Available pool balance and open bounty count for several onchain projects. */
+export async function readProjectsOverview(projectIds: bigint[]): Promise<Map<bigint, ProjectOverview>> {
+  const { address, abi } = requireContract();
+  const overview = new Map<bigint, ProjectOverview>();
+  if (projectIds.length === 0) return overview;
+
+  const [balances, bounties] = await Promise.all([
+    publicClient.multicall({
+      allowFailure: false,
+      contracts: projectIds.map((id) => ({ address, abi, functionName: "getBalances" as const, args: [id] as const })),
+    }),
+    readRecentBounties(),
+  ]);
+  projectIds.forEach((id, index) => {
+    overview.set(id, {
+      available: balances[index].available,
+      openBounties: bounties.filter((b) => b.projectId === id && b.status === 1).length,
+    });
+  });
+  return overview;
+}
+
+/** Total native MON claimed by contributors across every MON-denominated project in the contract. */
+export async function readTotalPaid(): Promise<bigint> {
+  const { address, abi } = requireContract();
+  const count = await publicClient.readContract({ address, abi, functionName: "projectCount" });
+  if (count === 0n) return 0n;
+  const ids = Array.from({ length: Number(count) }, (_, i) => BigInt(i + 1));
+  const [projects, balances] = await Promise.all([
+    publicClient.multicall({
+      allowFailure: false,
+      contracts: ids.map((id) => ({ address, abi, functionName: "getProject" as const, args: [id] as const })),
+    }),
+    publicClient.multicall({
+      allowFailure: false,
+      contracts: ids.map((id) => ({ address, abi, functionName: "getBalances" as const, args: [id] as const })),
+    }),
+  ]);
+  return balances.reduce((sum, b, i) => (isNativeAsset(projects[i].asset) ? sum + b.totalPaid : sum), 0n);
 }
 
 export async function readBounty(bountyId: bigint) {

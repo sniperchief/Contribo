@@ -1,29 +1,30 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
+/** Inputs: Fog background, 1px Mist border, 8px radius, 48px tall. */
 const control =
-  "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-subtle focus-visible:border-accent disabled:opacity-60";
+  "w-full min-w-0 rounded-control border border-mist bg-fog px-3.5 text-base text-ink placeholder:text-subtle focus-visible:border-plum disabled:bg-mist disabled:text-deep-teal read-only:bg-mist read-only:text-deep-teal";
 
 export function Field({ label, hint, children, className }: { label: string; hint?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <label className={cn("flex flex-col gap-1.5", className)}>
+    <label className={cn("flex flex-col gap-2", className)}>
       <span className="text-sm font-medium text-ink">{label}</span>
       {children}
-      {hint && <span className="text-xs text-muted">{hint}</span>}
+      {hint && <span className="text-caption text-deep-teal">{hint}</span>}
     </label>
   );
 }
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(control, "h-10", className)} {...props} />;
+  return <input className={cn(control, "h-12", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(control, "min-h-24", className)} {...props} />;
+  return <textarea className={cn(control, "min-h-24 py-3 leading-normal", className)} {...props} />;
 }
 
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(control, "h-10", className)} {...props} />;
+  return <select className={cn(control, "h-12 px-3", className)} {...props} />;
 }
 
 /** Inline result message for forms. */

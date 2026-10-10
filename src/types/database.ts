@@ -28,6 +28,13 @@ export type Database = {
           website_url: string | null;
           wallet_address: string | null;
           wallet_verified_at: string | null;
+          /** Other social accounts, keyed by platform (x, linkedin, discord, telegram, farcaster). */
+          social_links: Json;
+          /** Tech stack identifiers from src/lib/profile.ts. */
+          skills: string[];
+          /** Onboarding preference; never restricts access. */
+          primary_role: "contributor" | "founder" | null;
+          onboarded_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -47,6 +54,10 @@ export type Database = {
           website_url?: string | null;
           wallet_address?: string | null;
           wallet_verified_at?: string | null;
+          social_links?: Json;
+          skills?: string[];
+          primary_role?: "contributor" | "founder" | null;
+          onboarded_at?: string | null;
         };
         Relationships: [];
       };

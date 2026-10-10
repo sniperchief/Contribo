@@ -28,20 +28,20 @@ export function SubmitPullRequest({ projectId, detected }: { projectId: string; 
   return (
     <div className="flex flex-col gap-5">
       {detected.length > 0 && (
-        <ul className="divide-y divide-line rounded-md border border-line">
+        <ul className="overflow-hidden rounded-badge border border-mist">
           {detected.map((pull) => (
-            <li key={pull.url} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <a href={pull.url} target="_blank" rel="noreferrer" className="block truncate text-sm font-medium text-ink hover:underline">
+            <li key={pull.url} className="flex flex-wrap items-center justify-between gap-3 border-b border-mist px-5 py-4 last:border-b-0">
+              <div className="min-w-0 flex-[1_1_280px]">
+                <a href={pull.url} target="_blank" rel="noreferrer" className="block truncate text-base font-bold text-ink">
                   {pull.title}
                 </a>
-                <p className="font-mono text-xs text-subtle">
+                <p className="mt-1 text-[13px] text-deep-teal">
                   {pull.repo}#{pull.number}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2.5">
                 <StageBadge stage="detected" />
-                <Button size="sm" variant="secondary" disabled={pending} onClick={() => submit(pull.url)}>
+                <Button size="sm" variant="secondary" tone="sky" disabled={pending} onClick={() => submit(pull.url)}>
                   {pending && active === pull.url ? "Verifying…" : "Verify & submit"}
                 </Button>
               </div>
@@ -51,7 +51,7 @@ export function SubmitPullRequest({ projectId, detected }: { projectId: string; 
       )}
 
       <form
-        className="flex flex-col gap-2 sm:flex-row"
+        className="flex flex-col gap-3 sm:flex-row"
         onSubmit={(event) => {
           event.preventDefault();
           const url = new FormData(event.currentTarget).get("url");

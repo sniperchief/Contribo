@@ -23,13 +23,13 @@ Planned capabilities:
 | --- | --- |
 | Framework | [Next.js 16](https://nextjs.org) (App Router, Turbopack, Cache Components), React 19 |
 | Language | TypeScript (strict) |
-| Styling | Tailwind CSS v4 with CSS-variable design tokens (light and dark) |
+| Styling | Tailwind CSS v4 with design tokens from [design/style-reference.md](design/style-reference.md): warm, matte, light theme |
 | Auth and database | [Supabase](https://supabase.com): Auth with GitHub OAuth, PostgreSQL with Row Level Security |
-| Wallet | [wagmi](https://wagmi.sh) v3 + [viem](https://viem.sh): EIP-6963 browser-wallet discovery, Monad chain definitions from viem |
-| Fonts | Geist and Geist Mono (UI), Sora (display headings) via `next/font` |
+| Wallet | [RainbowKit](https://rainbowkit.com) 2 on [wagmi](https://wagmi.sh) v2 + [viem](https://viem.sh): connect modal with detected browser wallets and download links; Monad chain definitions from viem |
+| Fonts | Manrope (400, 500, 700) for everything, via `next/font` |
 | Smart contracts | Solidity 0.8.30, [Foundry](https://getfoundry.sh) ≥ 1.8 with Monad network rules, OpenZeppelin Contracts 5.7 |
 
-Dependencies are deliberately few: `@supabase/ssr`, `@supabase/supabase-js`, `wagmi`, `viem`, `@tanstack/react-query` (required by wagmi) and `server-only`. Tests use [Vitest](https://vitest.dev) (dev only).
+Dependencies are deliberately few: `@supabase/ssr`, `@supabase/supabase-js`, `@rainbow-me/rainbowkit`, `wagmi`, `viem`, `@tanstack/react-query` (required by wagmi), `server-only` and `tailwind-merge` (resolves class overrides in UI components). Tests use [Vitest](https://vitest.dev) (dev only).
 
 ## Getting started
 
@@ -72,6 +72,7 @@ All variables are listed in [.env.example](.env.example) with placeholder values
 | `SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET` | Supabase CLI | local Supabase only | GitHub OAuth App client secret. |
 | `NEXT_PUBLIC_MONAD_NETWORK` | public | no | `testnet` (default, chain 10143) or `mainnet` (chain 143). |
 | `NEXT_PUBLIC_MONAD_RPC_URL` | public | no | Dedicated RPC endpoint. Defaults to the public Monad RPC. |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | public | no | WalletConnect / Reown project ID. Enables phone wallets via QR code in the connect modal. |
 | `NEXT_PUBLIC_CONTRIBO_REWARDS_ADDRESS` | public | for onchain features | Deployed `ContriboRewards` address on the selected network. Leave empty until deployment. |
 
 `NEXT_PUBLIC_*` values are inlined into the browser bundle at build time, so restart the dev server or rebuild after changing them.
@@ -168,8 +169,13 @@ npx supabase gen types typescript --linked > src/types/database.ts
 
 ## Monad integration
 
-- **Approach:** wagmi v3 + viem. Viem ships maintained definitions for Monad Testnet (chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, native token MON) and Monad Mainnet (chain ID `143`, RPC `https://rpc.monad.xyz`). The app uses those definitions directly and lets you override the RPC URL.
-- **Wallets:** any EIP-6963 browser wallet (MetaMask, Rabby, Phantom, Backpack, …) is discovered automatically, and a generic injected connector covers older wallets. No WalletConnect project ID or other API key is needed. If wrong-network or mobile support needs it later, add a WalletConnect or Reown connector in [src/lib/wallet/config.ts](src/lib/wallet/config.ts).
+- **Approach:** RainbowKit 2 on wagmi v2 + viem. RainbowKit does not support wagmi v3 yet, so wagmi stays on v2 (2.19). Viem ships maintained definitions for Monad Testnet (chain ID `10143`, RPC `https://testnet-rpc.monad.xyz`, native token MON) and Monad Mainnet (chain ID `143`, RPC `https://rpc.monad.xyz`). The app uses those definitions directly and lets you override the RPC URL.
+- **Wallets.** "Connect wallet" opens the RainbowKit modal, themed to the design system. The wallet list is in [src/lib/wallet/config.ts](src/lib/wallet/config.ts).
+  - Wallets installed in the browser are detected automatically (EIP-6963) and listed first.
+  - Recommended wallets that are not installed link to their download page.
+  - A wrong network shows a "switch to Monad" prompt.
+- **Phone wallets (optional).** Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (free at [cloud.reown.com](https://cloud.reown.com)) to enable phone wallets via QR code (WalletConnect), plus WalletConnect, Trust and OKX. Without it, only browser wallets are offered (MetaMask, Rabby, Phantom, Backpack, Brave, and others detected in the browser), and no listed wallet depends on WalletConnect.
+- **Build note.** RainbowKit's Base Account connector pulls in `@coinbase/cdp-sdk`, whose optional `@x402/*` payment packages are not installed. [next.config.ts](next.config.ts) aliases them to a stub ([src/lib/stubs/x402-unavailable.ts](src/lib/stubs/x402-unavailable.ts)). Contribo never uses x402.
 - **Default network:** testnet.
 - The wallet button connects, switches to Monad and disconnects. Payout wallets are linked from the dashboard by signing a message (see below).
 
@@ -396,7 +402,7 @@ src/
     auth/sign-out/        Sign-out (POST)
     login/                GitHub sign-in page
     layout.tsx            Root layout, fonts, providers, header/footer
-    providers.tsx         wagmi + React Query providers
+    providers.tsx         wagmi, React Query and RainbowKit providers (themed)
     globals.css           Design tokens (light/dark) and base styles
   assets/brand/           Contribo logo (original PNG and transparent derivatives)
   components/
@@ -409,7 +415,7 @@ src/
     env.ts                Typed public environment configuration
     supabase/             Browser, server and proxy Supabase clients
     monad/chains.ts       Active Monad chain selection
-    wallet/config.ts      wagmi configuration
+    wallet/config.ts      wagmi + RainbowKit wallet list
   proxy.ts                Refreshes the Supabase session on each request (Next 16 "proxy", formerly middleware)
   types/database.ts       Database types for supabase-js
   app/projects/           Project discovery and detail (contributor submissions)
@@ -435,4 +441,9 @@ contracts/                Foundry project (Solidity)
 - `cacheComponents` is enabled. Any component that reads cookies or the session must render inside `<Suspense>`, as `AuthStatus` in the header does.
 - Next.js 16 renamed `middleware.ts` to `proxy.ts`.
 - `AGENTS.md` is maintained by `next dev` and points coding agents at the version-matched docs in `node_modules/next/dist/docs/`.
-- Design tokens are in `src/app/globals.css`. Use the semantic utilities (`bg-surface`, `text-muted`, `border-line`, `bg-accent`, …) rather than raw colors so light and dark modes stay consistent.
+- **Design.** The approved mockups are in [design/screens/](design/screens/) and the design system is in [design/style-reference.md](design/style-reference.md). Tokens live in `src/app/globals.css`:
+  - Palette utilities: `bg-sky`, `bg-terracotta`, `bg-lavender`, `bg-plum`, `bg-cream`, `bg-mist`, `bg-fog`, `text-deep-teal`, …
+  - Type scale: `text-display`, `text-heading`, `text-heading-sm`, `text-eyebrow`, …
+  - Radii: `rounded-control` 8px, `rounded-badge` 16px, `rounded-card` 24px, `rounded-feature` 56px.
+  - **Color meaning:** Sky = projects and repositories, Terracotta = bounties, Lavender = pools, rewards and claims, Plum = onchain.
+  - **No shadows or gradients.**

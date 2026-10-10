@@ -1,26 +1,26 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import logo from "@/assets/brand/contribo-logo.png";
 import mark from "@/assets/brand/contribo-mark.png";
 
 type LogoProps = {
-  /** `full` is the mark plus wordmark; `mark` is the symbol alone. */
+  /** `full` is the mark plus the "contribo" wordmark; `mark` is the symbol alone. */
   variant?: "full" | "mark";
   className?: string;
   /** Load immediately; use for above-the-fold placements such as the header. */
   eager?: boolean;
 };
 
-/** Contribo logo, rendered from the supplied brand PNG. Height is set via `className` (e.g. `h-7`). */
+/** Contribo logo: the supplied brand mark with the wordmark set in the UI typeface. */
 export function Logo({ variant = "full", className, eager }: LogoProps) {
+  if (variant === "mark") {
+    return (
+      <Image src={mark} alt="Contribo" width={64} loading={eager ? "eager" : undefined} className={cn("h-[23px] w-auto", className)} />
+    );
+  }
   return (
-    <Image
-      src={variant === "full" ? logo : mark}
-      // Upper bound of the rendered width; keeps generated image sizes small.
-      width={variant === "full" ? 180 : 64}
-      alt="Contribo"
-      loading={eager ? "eager" : undefined}
-      className={cn("brand-ink h-7 w-auto", className)}
-    />
+    <span className={cn("inline-flex items-center gap-2.5 text-ink", className)}>
+      <Image src={mark} alt="" width={64} loading={eager ? "eager" : undefined} className="h-[23px] w-auto" />
+      <span className="text-[22px] leading-none font-bold tracking-[-0.03em]">contribo</span>
+    </span>
   );
 }

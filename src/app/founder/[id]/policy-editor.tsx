@@ -2,6 +2,7 @@
 
 import { publishPolicy, savePolicyDraft } from "@/app/founder/actions";
 import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { Field, FormMessage, Input, Select, Textarea } from "@/components/ui/field";
 import { formatDate, shortHash } from "@/lib/format";
@@ -23,6 +24,7 @@ export function PolicyEditor({
   const draft = policies.find((p) => p.status === "draft") ?? null;
   const published = policies.find((p) => p.status === "published") ?? null;
   const base = draft ?? published;
+  const nextVersion = (policies[0]?.version ?? 0) + 1;
   const defaultAsset = onchainAsset
     ? onchainAsset === "0x0000000000000000000000000000000000000000"
       ? "MON"
@@ -32,17 +34,24 @@ export function PolicyEditor({
   return (
     <div className="flex flex-col gap-6">
       {policies.length > 0 && (
-        <ul className="divide-y divide-line rounded-md border border-line text-sm">
+        <ul className="flex flex-col">
           {policies.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-              <span className="text-ink">
+            <li key={p.id} className="flex flex-wrap items-center gap-3 border-b border-mist py-3.5">
+              <span className="min-w-0 flex-[1_1_200px] text-base font-bold">
                 v{p.version} · {p.title}
               </span>
-              <span className="flex items-center gap-2 text-xs text-muted">
-                {p.policy_hash && <span className="font-mono">{shortHash(p.policy_hash)}</span>}
-                {p.published_at && <span>published {formatDate(p.published_at)}</span>}
-                <Badge tone={p.status === "published" ? "success" : p.status === "draft" ? "warning" : "neutral"}>{p.status}</Badge>
+              <span className="text-sm text-deep-teal">
+                {p.contributor_pool_bps !== null ? `${p.contributor_pool_bps / 100}% pool · ` : ""}
+                {p.reward_asset === "MON" ? "MON" : shortHash(p.reward_asset)}
               </span>
+              {p.policy_hash && (
+                <span className="font-mono text-caption text-deep-teal" title={`Published ${formatDate(p.published_at)}`}>
+                  {shortHash(p.policy_hash)}
+                </span>
+              )}
+              <Badge tone={p.status === "published" ? "sky" : p.status === "draft" ? "cream" : "neutral"}>
+                {p.status === "published" ? "Published" : p.status === "draft" ? "Draft" : "Retired"}
+              </Badge>
             </li>
           ))}
         </ul>
@@ -50,20 +59,23 @@ export function PolicyEditor({
 
       <form
         key={draft?.id ?? "new"}
-        className="grid gap-4 sm:grid-cols-2"
+        className="grid gap-5 sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
           save.run(() => savePolicyDraft(projectId, draft?.id ?? null, formData), "Draft saved.");
         }}
       >
-        <p className="text-sm text-muted sm:col-span-2">
-          {draft
-            ? `Editing draft v${draft.version}.`
-            : published
-              ? "Published policies are frozen. Saving creates a new draft version."
-              : "Define the reward terms contributors will see before they start."}
-        </p>
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <Eyebrow>{draft ? `Draft · v${draft.version}` : `New draft · v${nextVersion}`}</Eyebrow>
+          <p className="text-sm text-deep-teal">
+            {draft
+              ? "Edit the draft, then publish it. Published versions cannot be edited."
+              : published
+                ? "Published policies are frozen. Saving creates a new draft version."
+                : "Define the reward terms contributors will see before they start."}
+          </p>
+        </div>
         <Field label="Title" className="sm:col-span-2">
           <Input name="title" required minLength={3} maxLength={120} defaultValue={base?.title ?? ""} />
         </Field>
@@ -88,18 +100,18 @@ export function PolicyEditor({
           <Input name="summary" maxLength={500} defaultValue={base?.summary ?? ""} />
         </Field>
         <Field label="Terms" hint="Full terms contributors agree to (Markdown)." className="sm:col-span-2">
-          <Textarea name="terms" rows={6} maxLength={20000} defaultValue={base?.terms ?? ""} />
+          <Textarea name="terms" rows={5} maxLength={20000} defaultValue={base?.terms ?? ""} placeholder="Full terms contributors agree to (Markdown)." />
         </Field>
         <Field label="Eligibility rules (JSON)" className="sm:col-span-2">
           <Textarea
             name="eligibility"
             rows={3}
-            className="font-mono"
+            className="font-mono text-sm"
             defaultValue={JSON.stringify(base?.eligibility ?? {}, null, 2)}
           />
         </Field>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-          <Button type="submit" variant="secondary" disabled={save.pending}>
+          <Button type="submit" variant="secondary" tone="lavender" disabled={save.pending}>
             {draft ? "Save draft" : "Create draft"}
           </Button>
           {draft && (

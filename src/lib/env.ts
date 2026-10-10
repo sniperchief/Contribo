@@ -26,6 +26,11 @@ export const env = {
     rpcUrl: optional(process.env.NEXT_PUBLIC_MONAD_RPC_URL),
   },
 
+  wallet: {
+    /** WalletConnect / Reown Cloud project ID; enables phone wallets via QR code. Optional. */
+    walletConnectProjectId: optional(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID),
+  },
+
   contracts: {
     /** Deployed ContriboRewards address on the configured network; unset until deployment. */
     rewardsAddress: optional(process.env.NEXT_PUBLIC_CONTRIBO_REWARDS_ADDRESS),

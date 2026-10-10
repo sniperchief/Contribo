@@ -2,7 +2,7 @@
 
 import { useCallback, useReducer } from "react";
 import type { Address, Hex, TransactionReceipt } from "viem";
-import { useConfig, useConnection } from "wagmi";
+import { useConfig, useAccount } from "wagmi";
 import { switchChain, waitForTransactionReceipt } from "wagmi/actions";
 import { contriboRewards } from "@/lib/contracts/config";
 import { initialTxState, txReducer } from "@/lib/contracts/tx";
@@ -23,7 +23,7 @@ class WalletNotConnectedError extends Error {
  */
 export function useContractTx() {
   const config = useConfig();
-  const { address, chainId } = useConnection();
+  const { address, chainId } = useAccount();
   const [state, dispatch] = useReducer(txReducer, initialTxState);
 
   const run = useCallback(

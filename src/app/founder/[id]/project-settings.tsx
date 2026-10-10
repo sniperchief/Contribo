@@ -21,7 +21,7 @@ export function ProjectSettings({ project }: { project: Tables<"projects"> }) {
   return (
     <div className="flex flex-col gap-6">
       <form
-        className="grid gap-4 sm:grid-cols-2"
+        className="grid gap-5 sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
@@ -38,33 +38,27 @@ export function ProjectSettings({ project }: { project: Tables<"projects"> }) {
           <Input name="tagline" defaultValue={project.tagline ?? ""} maxLength={160} />
         </Field>
         <Field label="Description" className="sm:col-span-2">
-          <Textarea name="description" defaultValue={project.description ?? ""} maxLength={4000} />
+          <Textarea name="description" rows={4} defaultValue={project.description ?? ""} maxLength={4000} />
         </Field>
-        <div className="flex items-center gap-3 sm:col-span-2">
-          <Button type="submit" variant="secondary" disabled={details.pending}>
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <Button type="submit" disabled={details.pending}>
             {details.pending ? "Saving…" : "Save details"}
           </Button>
+          {nextStatus.map((option) => (
+            <Button
+              key={option.status}
+              variant="secondary"
+              tone={option.status === "published" ? "sky" : "mist"}
+              disabled={status.pending}
+              onClick={() => status.run(() => setProjectStatus(project.id, option.status))}
+            >
+              {option.label === "Archive" ? "Archive project" : option.label}
+            </Button>
+          ))}
           <FormMessage {...details.message} />
+          <FormMessage {...status.message} />
         </div>
       </form>
-
-      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-4">
-        <span className="text-sm text-muted">
-          Status: <span className="font-medium text-ink">{project.status}</span>
-        </span>
-        {nextStatus.map((option) => (
-          <Button
-            key={option.status}
-            size="sm"
-            variant={option.status === "published" ? "primary" : "ghost"}
-            disabled={status.pending}
-            onClick={() => status.run(() => setProjectStatus(project.id, option.status))}
-          >
-            {option.label}
-          </Button>
-        ))}
-        <FormMessage {...status.message} />
-      </div>
     </div>
   );
 }

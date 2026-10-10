@@ -13,7 +13,7 @@ export function CreateProjectForm() {
 
   return (
     <form
-      className="grid gap-4 sm:grid-cols-2"
+      className="grid gap-5 sm:grid-cols-2"
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -35,7 +35,7 @@ export function CreateProjectForm() {
         <Input name="tagline" maxLength={160} placeholder="Typed client and tooling for Monad apps" />
       </Field>
       <div className="flex items-center gap-3 sm:col-span-2">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" size="lg" disabled={pending}>
           {pending ? "Creating…" : "Create draft project"}
         </Button>
         <FormMessage error={error} />
