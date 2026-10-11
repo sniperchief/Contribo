@@ -87,6 +87,12 @@ Migrations live in [supabase/migrations/](supabase/migrations/). Apply them in o
    - repository verification
    - server-published policy hashes
    - onchain project, approver and reward state
+3. [20261012000000_profile_socials_and_skills.sql](supabase/migrations/20261012000000_profile_socials_and_skills.sql): profile social links and skills.
+4. [20261013000000_onboarding.sql](supabase/migrations/20261013000000_onboarding.sql): primary role and onboarding.
+5. [20261014000000_guided_project_setup.sql](supabase/migrations/20261014000000_guided_project_setup.sql): guided project setup, which adds:
+   - `projects.setup_plan` for resuming an unfinished setup
+   - server-only project status changes (a project goes live only once it is registered and funded onchain)
+   - `bounty_details` for bounty titles
 
 ### Hosted Supabase project
 
@@ -125,7 +131,7 @@ To use GitHub sign-in locally, set `[auth.external.github] enabled = true` in `s
 | `github_identities` | Linked GitHub account (numeric user ID and login), synced from `auth.identities` by trigger. |
 | `projects` | Founder-owned projects with a `draft → published → archived` lifecycle and a unique slug. |
 | `project_repositories` | GitHub repositories under a project. Verification is checked against the GitHub API. A repository can be *verified* by only one project. |
-| `reward_policies` | Versioned reward terms: model (`bounty`, `funding_share`, `hybrid`), contributor pool in basis points, reward asset, structured eligibility rules. |
+| `reward_policies` | Versioned reward terms: model (`bounty` or `funding_share`; `hybrid` is kept only for older projects), contributor pool in basis points, reward asset. |
 | `contributions` | Pull-request evidence tied to a project, repository, GitHub author and the reward policy in force when the PR was merged. Also stores the accepted reward and the reconciled onchain approval and claim state. |
 | `project_approvers` | Approver wallets, recorded only after `isApprover` is confirmed onchain. |
 

@@ -334,7 +334,7 @@ export default function HomePage() {
       {/* FAQ */}
       <section id="faq" className="scroll-mt-4 bg-paper py-20">
         <Container className="flex flex-wrap gap-x-20 gap-y-10">
-          <div {...reveal()} className="flex flex-[1_1_320px] flex-col items-start gap-4 lg:sticky lg:top-10 lg:self-start">
+          <div {...reveal()} className="flex flex-[1_1_320px] flex-col items-start gap-4 lg:sticky lg:top-28 lg:self-start">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="text-heading">Frequently asked questions</h2>
             <p className="text-body-lg text-deep-teal">Everything you need to know about Contribo.</p>

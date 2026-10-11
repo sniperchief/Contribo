@@ -17,7 +17,9 @@ const REPO_ID = 555;
 function repo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   return {
     id: REPO_ID,
+    name: "sdk",
     full_name: "founder/sdk",
+    description: null,
     private: false,
     default_branch: "main",
     owner: { id: FOUNDER_ID, login: "founder", type: "User" },

@@ -176,6 +176,18 @@ export async function readProjectRegistration(txHash: Hex) {
   return event ? event.args : null;
 }
 
+/** BountyCreated events emitted by the contract in a successful transaction. */
+export async function readBountyCreations(txHash: Hex) {
+  const { address, abi } = requireContract();
+  const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+  if (receipt.status !== "success") return [];
+  return parseEventLogs({
+    abi,
+    eventName: "BountyCreated",
+    logs: receipt.logs.filter((log) => getAddress(log.address) === address),
+  }).map((event) => event.args);
+}
+
 export type AssetInfo = { symbol: string; decimals: number };
 
 export async function readAssetInfo(asset: string | null): Promise<AssetInfo> {

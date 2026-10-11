@@ -6,7 +6,9 @@
 /** Subset of GET /repos/{owner}/{repo}. */
 export type GitHubRepo = {
   id: number;
+  name: string;
   full_name: string;
+  description: string | null;
   private: boolean;
   default_branch: string;
   owner: { id: number; login: string; type: string };

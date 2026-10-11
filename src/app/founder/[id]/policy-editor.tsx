@@ -80,14 +80,20 @@ export function PolicyEditor({
           <Input name="title" required minLength={3} maxLength={120} defaultValue={base?.title ?? ""} />
         </Field>
         <Field label="Reward model">
-          <Select name="reward_model" defaultValue={base?.reward_model ?? "bounty"}>
-            <option value="bounty">Bounties for accepted work</option>
-            <option value="funding_share">Share of future funding</option>
-            <option value="hybrid">Bounties + funding share</option>
+          <Select name="reward_model" defaultValue={base?.reward_model === "funding_share" ? "funding_share" : "bounty"}>
+            <option value="bounty">Bounties</option>
+            <option value="funding_share">Contributor pool</option>
           </Select>
         </Field>
-        <Field label="Contributor pool (basis points)" hint="Share of future funding reserved for contributors. 1500 = 15%.">
-          <Input name="contributor_pool_bps" type="number" min={0} max={10000} defaultValue={base?.contributor_pool_bps ?? ""} />
+        <Field label="Contributor pool (%)" hint="Pool only: share of future funding reserved for contributors.">
+          <Input
+            name="contributor_pool_pct"
+            type="number"
+            min={0}
+            max={100}
+            step="0.01"
+            defaultValue={base?.contributor_pool_bps != null ? base.contributor_pool_bps / 100 : ""}
+          />
         </Field>
         <Field
           label="Reward asset"
@@ -101,14 +107,6 @@ export function PolicyEditor({
         </Field>
         <Field label="Terms" hint="Full terms contributors agree to (Markdown)." className="sm:col-span-2">
           <Textarea name="terms" rows={5} maxLength={20000} defaultValue={base?.terms ?? ""} placeholder="Full terms contributors agree to (Markdown)." />
-        </Field>
-        <Field label="Eligibility rules (JSON)" className="sm:col-span-2">
-          <Textarea
-            name="eligibility"
-            rows={3}
-            className="font-mono text-sm"
-            defaultValue={JSON.stringify(base?.eligibility ?? {}, null, 2)}
-          />
         </Field>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           <Button type="submit" variant="secondary" tone="lavender" disabled={save.pending}>

@@ -163,7 +163,7 @@ export function FeatureTriad() {
     <div className="grid gap-6 md:grid-cols-3">
       {cards.map((c, index) => (
         // The wrapper owns the entrance animation so it never fights the card's hover transform.
-        <div key={c.eyebrow} id={c.id} className="scroll-mt-24 motion-safe:animate-fade-up" style={{ animationDelay: `${index * 80}ms` }}>
+        <div key={c.eyebrow} id={c.id} className="scroll-mt-4 motion-safe:animate-fade-up" style={{ animationDelay: `${index * 80}ms` }}>
           <Link
             href={c.href}
             className={cn(

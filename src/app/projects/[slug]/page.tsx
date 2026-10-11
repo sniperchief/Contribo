@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { StageBadge } from "@/components/contributions/stage-badge";
+import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { ContractUnavailable } from "@/components/tx/contract-unavailable";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
@@ -27,7 +28,7 @@ export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   );
 }
 
-const modelLabels = { bounty: "Bounties", funding_share: "Share of future funding", hybrid: "Bounties + funding share" };
+const modelLabels = { bounty: "Bounties", funding_share: "Contributor pool", hybrid: "Bounties + contributor pool" };
 const modelTile = { bounty: "bg-terracotta", funding_share: "bg-lavender", hybrid: "bg-sky" };
 
 async function ProjectContent({ params }: { params: Promise<{ slug: string }> }) {
@@ -67,7 +68,7 @@ async function ProjectContent({ params }: { params: Promise<{ slug: string }> })
               </span>
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap gap-2">
-                  {project.status !== "published" && <Badge tone="cream">{project.status === "draft" ? "Draft" : "Archived"}</Badge>}
+                  <ProjectStatusBadge status={project.status} />
                   {project.onchain_project_id && <Badge tone="plum">Onchain #{project.onchain_project_id}</Badge>}
                 </div>
                 <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">{project.name}</h1>
@@ -152,14 +153,6 @@ function RewardTerms({ policy }: { policy: Tables<"reward_policies"> | null }) {
           </div>
         </div>
         {policy.terms && <p className="text-base whitespace-pre-line text-deep-teal">{policy.terms}</p>}
-        {policy.eligibility && Object.keys(policy.eligibility as object).length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Eyebrow>Eligibility rules</Eyebrow>
-            <pre className="overflow-x-auto rounded-badge bg-fog px-5 py-4 font-mono text-sm text-ink">
-              {JSON.stringify(policy.eligibility, null, 2)}
-            </pre>
-          </div>
-        )}
         <p className="border-t border-mist pt-4 text-caption text-deep-teal">
           Published {formatDate(policy.published_at)} · Policy hash{" "}
           <span className="font-mono">{shortHash(policy.policy_hash ?? "")}</span>. Published policies cannot be edited.
@@ -169,20 +162,32 @@ function RewardTerms({ policy }: { policy: Tables<"reward_policies"> | null }) {
   );
 }
 
-async function loadOnchainSummary(onchainProjectId: string) {
+async function loadOnchainSummary(projectId: string, onchainProjectId: string) {
   try {
     const id = BigInt(onchainProjectId);
-    const [onchain, bounties] = await Promise.all([readOnchainProject(id), readProjectBounties(id)]);
+    const supabase = await createClient();
+    const [onchain, bounties, details] = await Promise.all([
+      readOnchainProject(id),
+      readProjectBounties(id),
+      supabase?.from("bounty_details").select("bounty_id, title").eq("project_id", projectId),
+    ]);
     if (!onchain) return null;
     const asset = await readAssetInfo(onchain.asset);
-    return { onchain, asset, open: bounties.filter((b) => b.status === BountyStatusOnchain.Open) };
+    const titles = new Map((details?.data ?? []).map((row) => [String(row.bounty_id), row.title]));
+    return {
+      onchain,
+      asset,
+      open: bounties
+        .filter((b) => b.status === BountyStatusOnchain.Open)
+        .map((b) => ({ ...b, title: titles.get(b.id.toString()) ?? null })),
+    };
   } catch {
     return null;
   }
 }
 
 async function OnchainSummary({ project, publishedHash }: { project: Tables<"projects">; publishedHash: string | null }) {
-  const data = contriboRewards && project.onchain_project_id ? await loadOnchainSummary(project.onchain_project_id) : null;
+  const data = contriboRewards && project.onchain_project_id ? await loadOnchainSummary(project.id, project.onchain_project_id) : null;
 
   let body: React.ReactNode;
   let aside: React.ReactNode;
@@ -223,7 +228,7 @@ async function OnchainSummary({ project, publishedHash }: { project: Tables<"pro
               {open.map((b) => (
                 <li key={b.id.toString()} className="flex items-center justify-between gap-3 border-b border-mist px-4 py-3 last:border-b-0">
                   <span className="text-sm">
-                    <span className="font-bold">Bounty #{b.id.toString()}</span>
+                    <span className="font-bold">{b.title ?? `Bounty #${b.id.toString()}`}</span>
                     <span className="text-deep-teal"> · until {formatDate(new Date(Number(b.deadline) * 1000).toISOString())}</span>
                   </span>
                   <Badge tone="terracotta">{fmt(b.amount)}</Badge>

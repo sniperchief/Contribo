@@ -5,7 +5,7 @@ import { useState } from "react";
 import { erc20Abi, getAddress, isAddress, parseUnits, zeroAddress, zeroHash, type Address, type Hex } from "viem";
 import { useConfig, useAccount } from "wagmi";
 import { getBalance, readContract, simulateContract, writeContract } from "wagmi/actions";
-import { confirmProjectRegistration, syncApprover } from "@/app/founder/actions";
+import { confirmProjectRegistration, recordBountyDetails, syncApprover } from "@/app/founder/actions";
 import { TxStatus } from "@/components/tx/tx-status";
 import { useContractTx } from "@/components/tx/use-contract-tx";
 import { ConnectWalletButton } from "@/components/wallet/connect-wallet-button";
@@ -26,7 +26,7 @@ export type OnchainSnapshot = {
   balances: { available: string; escrowed: string; committed: string; totalDeposited: string; totalPaid: string; totalWithdrawn: string };
 };
 
-export type BountyRow = { id: string; amount: string; deadline: number; status: number };
+export type BountyRow = { id: string; amount: string; deadline: number; status: number; title?: string | null };
 
 type Props = {
   projectId: string;
@@ -322,7 +322,7 @@ function FundProject({ onchainProjectId, onchain, asset }: Props & { onchain: On
   );
 }
 
-function Bounties({ onchainProjectId, asset, bounties }: Props) {
+function Bounties({ projectId, onchainProjectId, asset, bounties }: Props) {
   const config = useConfig();
   const router = useRouter();
   const tx = useContractTx();
@@ -340,6 +340,8 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
       return setError("Enter a valid amount.");
     }
     const days = Number(form.get("days"));
+    const title = String(form.get("title") ?? "").trim();
+    if (title.length < 3) return setError("Give the bounty a title (at least 3 characters).");
     if (amount <= 0n || !Number.isInteger(days) || days < 1 || days > 365) {
       return setError("Enter an amount and a deadline between 1 and 365 days.");
     }
@@ -355,7 +357,11 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
       });
       return writeContract(config, request);
     });
-    if (receipt) router.refresh();
+    if (receipt) {
+      const saved = await recordBountyDetails(projectId, receipt.transactionHash, [title]);
+      if (!saved.ok) setError(saved.error);
+      router.refresh();
+    }
   }
 
   return (
@@ -365,7 +371,7 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
         <ul className="overflow-hidden rounded-badge border border-mist">
           {bounties.map((b) => (
             <li key={b.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-mist px-5 py-3.5 last:border-b-0">
-              <span className="flex-[1_1_160px] text-[15px] font-bold">Bounty #{b.id}</span>
+              <span className="min-w-0 flex-[1_1_160px] truncate text-[15px] font-bold">{b.title ?? `Bounty #${b.id}`}</span>
               <span className="text-sm text-deep-teal">Deadline {formatDate(new Date(b.deadline * 1000).toISOString())}</span>
               <Badge tone={b.status === BountyStatusOnchain.Open ? "terracotta" : b.status === BountyStatusOnchain.Cancelled ? "cream" : "neutral"}>
                 {statusLabel[b.status]}
@@ -376,12 +382,13 @@ function Bounties({ onchainProjectId, asset, bounties }: Props) {
         </ul>
       )}
       <form
-        className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]"
+        className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto]"
         onSubmit={(event) => {
           event.preventDefault();
           void create(new FormData(event.currentTarget));
         }}
       >
+        <Input name="title" required minLength={3} maxLength={120} placeholder="Bounty title" aria-label="Bounty title" />
         <Input name="amount" inputMode="decimal" required placeholder={`Amount in ${asset.symbol}`} aria-label="Bounty amount" />
         <Input name="days" type="number" min={1} max={365} defaultValue={30} aria-label="Deadline in days" />
         <Button type="submit" variant="secondary" tone="terracotta" disabled={tx.busy}>

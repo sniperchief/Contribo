@@ -49,9 +49,9 @@ export function AccountMenu({ githubLogin, displayName, avatarUrl, walletLinked 
         aria-expanded={open}
         aria-label={walletLinked ? label : `${label}: payout wallet not linked`}
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-11 items-center gap-2.5 rounded-full bg-mist p-1 sm:pr-3.5 text-[15px] font-bold text-ink hover:bg-sky/40"
+        className="relative flex h-11 items-center gap-2.5 rounded-full bg-paper p-1 text-[15px] font-bold text-ink hover:bg-fog sm:pr-3.5"
       >
-        {!walletLinked && <span aria-hidden className="absolute top-0.5 left-8 size-3 rounded-full border-2 border-mist bg-terracotta" />}
+        {!walletLinked && <span aria-hidden className="absolute top-0.5 left-8 size-3 rounded-full border-2 border-paper bg-terracotta" />}
         {avatarUrl ? (
           <Image src={avatarUrl} alt="" width={36} height={36} unoptimized className="size-9 rounded-full bg-lavender" />
         ) : (

@@ -79,14 +79,17 @@ async function ManageContent({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
-  const [{ data: contributions }, { data: approverRows }] = await Promise.all([
+  const [{ data: contributions }, { data: approverRows }, { data: bountyTitles }] = await Promise.all([
     admin
       .from("contributions")
       .select("*, reward_policies(version), profiles:contributor_id(wallet_address, wallet_verified_at)")
       .eq("project_id", project.id)
       .order("created_at", { ascending: false }),
     admin.from("project_approvers").select("address").eq("project_id", project.id),
+    admin.from("bounty_details").select("bounty_id, title").eq("project_id", project.id),
   ]);
+  const titles = new Map((bountyTitles ?? []).map((row) => [String(row.bounty_id), row.title]));
+  bounties = bounties.map((b) => ({ ...b, title: titles.get(b.id) ?? null }));
 
   const approvers = await Promise.all(
     (approverRows ?? []).map(async (row) => ({
@@ -138,39 +141,30 @@ async function ManageContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <>
-      <section className="pt-10 pb-8">
-        <Container className="flex flex-col gap-4">
-          <p className="text-sm text-deep-teal">
-            <Link href="/founder" className="font-medium text-ink">
-              Your projects
-            </Link>{" "}
-            <span aria-hidden>/</span> {project.name}
-          </p>
-          <div className="flex flex-wrap items-end justify-between gap-5">
-            <div className="flex items-center gap-4">
-              <span className="grid size-16 shrink-0 place-items-center rounded-[20px] bg-sky text-heading-sm font-bold">
-                {project.name.charAt(0).toUpperCase()}
-              </span>
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap gap-2">
-                  <Badge tone={project.status === "published" ? "sky" : "neutral"}>
-                    {project.status === "published" ? "Published" : project.status === "draft" ? "Draft" : "Archived"}
-                  </Badge>
-                  <Badge tone="lavender">{access.isOwner ? "Owner" : "Approver"}</Badge>
-                </div>
-                <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">{project.name}</h1>
-              </div>
+      {access.isOwner && project.status === "draft" && project.setup_plan && (
+        <section className="pt-10">
+          <Container>
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-card border-2 border-terracotta bg-paper px-6 py-5 sm:px-9">
+              <p className="text-base text-ink">This project isn&apos;t live yet. Finish setup to fund it and list it on Explore.</p>
+              <Link href={`/founder/new?project=${project.id}`} className={buttonStyles()}>
+                Finish setup
+              </Link>
             </div>
-            <Link href={`/projects/${project.slug}`} className={buttonStyles({ variant: "ghost", arrow: true, className: "gap-2" })}>
-              View public page
-            </Link>
-          </div>
+          </Container>
+        </section>
+      )}
+      <section className="pt-10 pb-6">
+        <Container className="flex justify-end">
+          <h1 className="sr-only">{project.name}</h1>
+          <Link href={`/projects/${project.slug}`} className={buttonStyles({ variant: "ghost", arrow: true, className: "gap-2" })}>
+            View public page
+          </Link>
         </Container>
       </section>
 
       <section className="pb-20">
         <Container className="flex flex-wrap items-start gap-8">
-          <nav aria-label="On this page" className="flex max-w-full flex-[1_1_220px] flex-col gap-1 rounded-card bg-paper p-6 lg:sticky lg:top-6">
+          <nav aria-label="On this page" className="flex max-w-full flex-[1_1_220px] flex-col gap-1 rounded-card bg-paper p-6 lg:sticky lg:top-28">
             <Eyebrow className="mb-2">On this page</Eyebrow>
             {menu.map((item) => (
               <a key={item.href} href={item.href} className="flex items-center justify-between rounded-control px-3 py-2.5 text-[15px] font-medium text-ink hover:bg-fog">

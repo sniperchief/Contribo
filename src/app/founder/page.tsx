@@ -1,24 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
+import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { buttonStyles } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { cn } from "@/lib/cn";
+import { setupStep } from "@/lib/project-setup";
 import { getViewer } from "@/lib/server/viewer";
-import { CreateProjectForm } from "./create-project-form";
 
 export const metadata: Metadata = { title: "My projects" };
-
-const steps = [
-  { label: "Verify your repos", tint: "bg-sky" },
-  { label: "Publish a reward policy", tint: "bg-lavender" },
-  { label: "Register onchain", tint: "bg-cream" },
-  { label: "Fund and review work", tint: "bg-terracotta" },
-];
-
-const projectTints = ["bg-sky", "bg-lavender", "bg-cream"];
 
 export default function FounderPage() {
   return (
@@ -29,27 +19,12 @@ export default function FounderPage() {
             <Eyebrow>Founder</Eyebrow>
             <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">Your projects</h1>
             <p className="text-body-lg text-deep-teal">
-              Connect repositories, publish reward terms, register the project onchain, fund it, and review contributions.
+              Pick a repository, choose and fund your rewards, and launch. Then review contributions here.
             </p>
           </div>
-          <Link href="#create" className={buttonStyles({ size: "lg" })}>
+          <Link href="/founder/new" className={buttonStyles({ size: "lg" })}>
             + Create a project
           </Link>
-        </Container>
-      </section>
-
-      <section className="pb-10">
-        <Container>
-          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, index) => (
-              <li key={step.label} className="flex items-center gap-3.5 rounded-card bg-paper p-6">
-                <span className={cn("grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold", step.tint)}>
-                  {index + 1}
-                </span>
-                <span className="text-[15px] font-medium">{step.label}</span>
-              </li>
-            ))}
-          </ol>
         </Container>
       </section>
 
@@ -78,9 +53,16 @@ async function FounderContent() {
 
   const { data: projects } = await viewer.supabase
     .from("projects")
-    .select("id, name, slug, status, onchain_project_id, reward_policies(status)")
+    .select("id, name, slug, tagline, status, onchain_project_id, reward_policies(status), project_repositories(verified_at)")
     .eq("owner_id", viewer.userId)
     .order("created_at", { ascending: false });
+  // Unfinished guided setups (a separate read so the list still works before the setup migration is applied).
+  const { data: setups } = await viewer.supabase
+    .from("projects")
+    .select("id")
+    .eq("owner_id", viewer.userId)
+    .not("setup_plan", "is", null);
+  const inSetup = new Set((setups ?? []).map((p) => p.id));
 
   return (
     <>
@@ -102,53 +84,43 @@ async function FounderContent() {
         </section>
       )}
 
-      {projects && projects.length > 0 && (
-        <section className="pb-10">
+      {projects && projects.length > 0 ? (
+        <section className="pb-20">
           <Container className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project, index) => {
-              const hasPolicy = project.reward_policies.some((p) => p.status === "published");
+            {projects.map((project) => {
+              // Drafts that never went onchain, or that have an unfinished guided setup, continue in setup.
+              const setup = project.status === "draft" && (!project.onchain_project_id || inSetup.has(project.id));
+              const step = setupStep({
+                hasVerifiedRepo: project.project_repositories.some((r) => r.verified_at),
+                hasPlan: project.reward_policies.some((p) => p.status === "draft" || p.status === "published"),
+              });
               return (
-                <Link key={project.id} href={`/founder/${project.id}`} className="flex flex-col gap-4 rounded-card bg-paper p-8 text-ink">
-                  <div className="flex items-center gap-3.5">
-                    <span className={cn("grid size-[52px] shrink-0 place-items-center rounded-badge text-xl font-bold", projectTints[index % projectTints.length])}>
-                      {project.name.charAt(0).toUpperCase()}
-                    </span>
+                <Link
+                  key={project.id}
+                  href={setup ? `/founder/new?project=${project.id}` : `/founder/${project.id}`}
+                  className="group flex min-h-[220px] flex-col gap-4 rounded-card border-2 border-mist bg-paper p-8 text-ink transition-colors hover:border-sky hover:text-ink"
+                >
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-subheading font-bold tracking-[-0.02em]">{project.name}</p>
-                      <p className="mt-0.5 truncate text-sm text-deep-teal">/{project.slug}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-deep-teal">{project.tagline ?? `/${project.slug}`}</p>
                     </div>
+                    <ProjectStatusBadge status={project.status} draftLabel={setup ? "In setup" : "Not live"} />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge tone={project.status === "published" ? "sky" : "neutral"}>
-                      {project.status === "published" ? "Published" : project.status === "draft" ? "Draft" : "Archived"}
-                    </Badge>
-                    <Badge tone={hasPolicy ? "lavender" : "cream"}>{hasPolicy ? "Policy published" : "No published policy"}</Badge>
-                    <Badge tone={project.onchain_project_id ? "sky" : "neutral"}>
-                      {project.onchain_project_id ? `Onchain #${project.onchain_project_id}` : "Not onchain"}
-                    </Badge>
-                  </div>
-                  <span className="border-t border-mist pt-3.5 text-base font-medium">Manage project →</span>
+                  <span className="mt-auto border-t border-mist pt-3.5 text-base font-medium">
+                    {setup ? `Continue setup · step ${step} of 3 →` : "Manage project →"}
+                  </span>
                 </Link>
               );
             })}
           </Container>
         </section>
+      ) : (
+        <Container className="pb-20">
+          <p className="rounded-card bg-paper p-9 text-base text-deep-teal">No projects yet. Use “Create a project” to set up your first one in three steps.</p>
+        </Container>
       )}
 
-      <section id="create" className="scroll-mt-4 pb-20">
-        <Container>
-          <div className="flex flex-wrap gap-x-14 gap-y-8 rounded-card bg-paper p-6 sm:p-9">
-            <div className="flex flex-[1_1_300px] flex-col gap-3">
-              <Eyebrow>New project</Eyebrow>
-              <h2 className="text-heading-sm">Create a project</h2>
-              <p className="text-base text-deep-teal">Projects start as drafts. Publish when your repositories and reward terms are ready.</p>
-            </div>
-            <div className="min-w-0 flex-[2_1_520px]">
-              <CreateProjectForm />
-            </div>
-          </div>
-        </Container>
-      </section>
     </>
   );
 }

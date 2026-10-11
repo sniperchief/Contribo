@@ -97,6 +97,12 @@ export function createGitHubClient({ token = serverEnv.githubToken, fetch: fetch
       return request<GitHubPull>(`/repos/${owner}/${name}/pulls/${number}`);
     },
 
+    /** Public repositories owned by a user, most recently pushed first (GET /users/{username}/repos). */
+    async listUserRepos(login: string): Promise<GitHubRepo[]> {
+      if (!isValidRepoOwner(login)) throw new GitHubApiError("Invalid GitHub username.", 400);
+      return (await request<GitHubRepo[]>(`/users/${login}/repos?type=owner&sort=pushed&per_page=100`)) ?? [];
+    },
+
     /** Public profile of a GitHub user (GET /users/{username}). */
     async getUser(login: string) {
       if (!isValidRepoOwner(login)) throw new GitHubApiError("Invalid GitHub username.", 400);

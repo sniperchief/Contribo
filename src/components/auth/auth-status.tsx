@@ -13,7 +13,7 @@ type CurrentProfile = {
 
 /** Header account area for a loaded session: the account menu, or sign-in links when signed out. */
 export function AuthStatus({ profile }: { profile: CurrentProfile | null }) {
-  if (!profile) return <SignedOutActions className="hidden md:flex" />;
+  if (!profile) return <SignedOutActions className="flex" />;
 
   return (
     <AccountMenu
@@ -44,7 +44,7 @@ export function SignedOutActions({ className, stacked = false }: { className?: s
       <Link href="/login" className="py-2.5 text-base font-medium text-ink">
         Login
       </Link>
-      <Link href="/login" className={buttonStyles({ size: "md" })}>
+      <Link href="/login" className={buttonStyles({ size: "sm", className: "rounded-full px-6 font-bold" })}>
         Get started
       </Link>
     </div>
@@ -52,5 +52,5 @@ export function SignedOutActions({ className, stacked = false }: { className?: s
 }
 
 export function AuthStatusFallback() {
-  return <span className="h-11 w-11 animate-pulse rounded-full bg-mist md:w-40" aria-hidden />;
+  return <span className="h-11 w-40 animate-pulse rounded-full bg-paper/70" aria-hidden />;
 }

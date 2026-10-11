@@ -107,10 +107,12 @@ export type Database = {
           onchain_project_id: string | null;
           onchain_asset: string | null;
           onchain_registration_tx: string | null;
+          /** Unfinished guided setup (see `SetupPlan` in src/lib/project-setup.ts). */
+          setup_plan: Json | null;
           created_at: string;
           updated_at: string;
         };
-        /** onchain_* and published_at are written by the server only. */
+        /** onchain_*, status and published_at are written by the server only. */
         Insert: {
           id?: string;
           owner_id?: string;
@@ -130,6 +132,7 @@ export type Database = {
           website_url?: string | null;
           logo_url?: string | null;
           status?: ProjectStatus;
+          setup_plan?: Json | null;
           onchain_project_id?: string | null;
           onchain_asset?: string | null;
           onchain_registration_tx?: string | null;
@@ -229,6 +232,34 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reward_policies_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bounty_details: {
+        Row: {
+          bounty_id: string;
+          project_id: string;
+          title: string;
+          tx_hash: string | null;
+          created_at: string;
+        };
+        /** Written by the server after reading the BountyCreated event. */
+        Insert: {
+          bounty_id: string;
+          project_id: string;
+          title: string;
+          tx_hash?: string | null;
+        };
+        Update: {
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bounty_details_project_id_fkey";
             columns: ["project_id"];
             isOneToOne: false;
             referencedRelation: "projects";

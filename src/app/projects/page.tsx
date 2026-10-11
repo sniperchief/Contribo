@@ -43,7 +43,7 @@ async function ProjectList() {
   const { data: projects } = await supabase
     .from("projects")
     .select(
-      "id, slug, name, tagline, published_at, onchain_project_id, onchain_asset, reward_policies(status, reward_model, reward_asset), project_repositories(github_owner, github_name, verified_at), contributions(github_user_id)",
+      "id, slug, name, tagline, published_at, onchain_project_id, onchain_asset, reward_policies(status, reward_asset), project_repositories(github_owner, github_name, verified_at), contributions(github_user_id)",
     )
     .eq("status", "published")
     .order("published_at", { ascending: false })
@@ -73,8 +73,6 @@ async function ProjectList() {
       owner: repos[0]?.github_owner ?? null,
       repoCount: repos.length,
       repoNames: repos.map((r) => `${r.github_owner}/${r.github_name}`),
-      model: policy?.reward_model ?? null,
-      asset: policy ? (policy.reward_asset === "MON" ? "MON" : "ERC20") : null,
       openBounties: stats?.openBounties ?? null,
       poolAvailable: stats ? Number(stats.available) : null,
       poolLabel: stats ? (native ? formatAmount(stats.available, 18, activeChain.nativeCurrency.symbol) : "Token pool") : "—",

@@ -193,6 +193,8 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* Anchor targets land below the sticky header. */
+    scroll-padding-top: 96px;
   }
 
   body {

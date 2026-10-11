@@ -10,11 +10,11 @@ import {
   VERIFICATION_FILE_PATH,
 } from "@/lib/github/verification";
 import { computePolicyHash } from "@/lib/policy";
-import { PROJECT_SLUG_RE, projectMetadataUri } from "@/lib/projects";
-import { canManageProject, canReviewContributions, checkAcceptance, planApproval } from "@/lib/rules";
-import { createAdminClient } from "@/lib/server/admin";
+import { projectMetadataUri } from "@/lib/projects";
+import { canReviewContributions, checkAcceptance, planApproval } from "@/lib/rules";
 import {
   readBounty,
+  readBountyCreations,
   readContribution,
   readIsApprover,
   readOnchainProject,
@@ -22,29 +22,13 @@ import {
 } from "@/lib/server/chain";
 import { createGitHubClient } from "@/lib/server/github";
 import { runAction } from "@/lib/server/run-action";
+import { isFundedOnchain, loadOwnedProject, requireAdmin } from "@/lib/server/founder";
 import { getProjectAccess, requireViewer, type Viewer } from "@/lib/server/viewer";
-import type { Json, ProjectStatus, RewardModel } from "@/types/database";
+import type { ProjectStatus, RewardModel } from "@/types/database";
 
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
-
-function requireAdmin() {
-  const admin = createAdminClient();
-  if (!admin) throw new Error("SUPABASE_SECRET_KEY is not configured.");
-  return admin;
-}
-
-async function loadOwnedProject(viewer: Viewer, projectId: string) {
-  const { data: project } = await viewer.supabase
-    .from("projects")
-    .select("id, owner_id, status, onchain_project_id, onchain_asset")
-    .eq("id", projectId)
-    .maybeSingle();
-  if (!project) return null;
-  const decision = canManageProject(await getProjectAccess(viewer, project));
-  return decision.ok ? project : null;
-}
 
 function text(value: FormDataEntryValue | null, max: number): string | null {
   const trimmed = typeof value === "string" ? value.trim() : "";
@@ -54,27 +38,6 @@ function text(value: FormDataEntryValue | null, max: number): string | null {
 // -----------------------------------------------------------------------------
 // Projects
 // -----------------------------------------------------------------------------
-
-export async function createProject(formData: FormData): Promise<ActionResult<{ id: string }>> {
-  return runAction(async () => {
-    const viewer = await requireViewer();
-    const name = text(formData.get("name"), 80);
-    const slug = text(formData.get("slug"), 64)?.toLowerCase() ?? "";
-    if (!name || name.length < 2) return fail("Enter a project name (at least 2 characters).");
-    if (!PROJECT_SLUG_RE.test(slug)) {
-      return fail("Slugs use 3–64 lowercase letters, numbers and hyphens, and cannot start or end with a hyphen.");
-    }
-
-    const { data, error } = await viewer.supabase
-      .from("projects")
-      .insert({ name, slug, tagline: text(formData.get("tagline"), 160) })
-      .select("id")
-      .single();
-    if (isUniqueViolation(error)) return fail("That slug is already taken.");
-    if (error || !data) return fail("Could not create the project.");
-    return ok({ id: data.id });
-  });
-}
 
 export async function updateProjectDetails(projectId: string, formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
@@ -101,15 +64,18 @@ export async function updateProjectDetails(projectId: string, formData: FormData
   });
 }
 
+/** Status changes go through the server: publishing requires an onchain-registered, funded project. */
 export async function setProjectStatus(projectId: string, status: ProjectStatus): Promise<ActionResult> {
   return runAction(async () => {
     const viewer = await requireViewer();
     if (!["draft", "published", "archived"].includes(status)) return fail("Invalid status.");
-    const { error, count } = await viewer.supabase
-      .from("projects")
-      .update({ status }, { count: "exact" })
-      .eq("id", projectId);
-    if (error || count !== 1) return fail("Could not change the project status.");
+    const project = await loadOwnedProject(viewer, projectId);
+    if (!project) return fail("Project not found.");
+    if (status === "published" && !(await isFundedOnchain(project.onchain_project_id))) {
+      return fail("Register the project onchain and fund it before publishing.");
+    }
+    const { error } = await requireAdmin().from("projects").update({ status }).eq("id", projectId);
+    if (error) return fail("Could not change the project status.");
     return ok();
   });
 }
@@ -196,7 +162,8 @@ export async function verifyRepository(repositoryId: string): Promise<ActionResu
 // Reward policies
 // -----------------------------------------------------------------------------
 
-const REWARD_MODELS: RewardModel[] = ["bounty", "funding_share", "hybrid"];
+/** A project rewards contributors with bounties OR a contributor pool, never both. */
+const REWARD_MODELS: RewardModel[] = ["bounty", "funding_share"];
 
 export async function savePolicyDraft(
   projectId: string,
@@ -209,37 +176,27 @@ export async function savePolicyDraft(
 
     const title = text(formData.get("title"), 120);
     const rewardModel = formData.get("reward_model") as RewardModel;
-    const poolRaw = text(formData.get("contributor_pool_bps"), 6);
-    const pool = poolRaw === null ? null : Number(poolRaw);
+    const poolRaw = text(formData.get("contributor_pool_pct"), 6);
+    const pool = poolRaw === null ? null : Math.round(Number(poolRaw) * 100);
     const rewardAsset = text(formData.get("reward_asset"), 42) ?? "MON";
-    const eligibilityRaw = text(formData.get("eligibility"), 4000) ?? "{}";
 
     if (!title || title.length < 3) return fail("Enter a policy title (at least 3 characters).");
-    if (!REWARD_MODELS.includes(rewardModel)) return fail("Choose a reward model.");
+    if (!REWARD_MODELS.includes(rewardModel)) return fail("Choose bounties or a contributor pool.");
     if (pool !== null && (!Number.isInteger(pool) || pool < 0 || pool > 10000)) {
-      return fail("Contributor pool must be 0–10000 basis points.");
+      return fail("Contributor pool must be between 0% and 100%.");
     }
-    if (rewardModel !== "bounty" && pool === null) return fail("Funding-share policies need a contributor pool share.");
+    if (rewardModel === "funding_share" && pool === null) return fail("A contributor pool needs a pool share.");
     if (rewardAsset !== "MON" && !isAddress(rewardAsset)) return fail("Reward asset must be MON or a token address.");
-
-    let eligibility: Json;
-    try {
-      eligibility = JSON.parse(eligibilityRaw);
-    } catch {
-      return fail("Eligibility rules must be valid JSON.");
-    }
-    if (!eligibility || typeof eligibility !== "object" || Array.isArray(eligibility)) {
-      return fail("Eligibility rules must be a JSON object.");
-    }
 
     const fields = {
       title,
       summary: text(formData.get("summary"), 500),
       terms: text(formData.get("terms"), 20000) ?? "",
       reward_model: rewardModel,
-      contributor_pool_bps: pool,
+      contributor_pool_bps: rewardModel === "bounty" ? null : pool,
       reward_asset: rewardAsset,
-      eligibility,
+      // Eligibility is enforced by verification (merged PR, verified repo, linked GitHub account).
+      eligibility: {},
     };
 
     if (policyId) {
@@ -317,7 +274,10 @@ export async function publishPolicy(policyId: string): Promise<ActionResult<{ po
 // -----------------------------------------------------------------------------
 
 /** Links a confirmed `registerProject` transaction to the Contribo project. */
-export async function confirmProjectRegistration(projectId: string, txHash: string): Promise<ActionResult> {
+export async function confirmProjectRegistration(
+  projectId: string,
+  txHash: string,
+): Promise<ActionResult<{ onchainProjectId: string }>> {
   return runAction(async () => {
     const viewer = await requireViewer();
     if (!contriboRewards) return fail("The rewards contract is not configured.");
@@ -348,7 +308,7 @@ export async function confirmProjectRegistration(projectId: string, txHash: stri
       .is("onchain_project_id", null);
     if (isUniqueViolation(error)) return fail("That onchain project is already linked.");
     if (error) return fail("Could not save the registration.");
-    return ok();
+    return ok({ onchainProjectId: event.projectId.toString() });
   });
 }
 
@@ -369,6 +329,31 @@ export async function syncApprover(projectId: string, address: string, txHash?: 
       ? await admin.from("project_approvers").upsert({ ...row, tx_hash: txHash ?? null })
       : await admin.from("project_approvers").delete().match(row);
     if (error) return fail("Could not record the approver.");
+    return ok();
+  });
+}
+
+/** Saves bounty titles for the bounties a confirmed transaction created for this project (in event order). */
+export async function recordBountyDetails(projectId: string, txHash: string, titles: string[]): Promise<ActionResult> {
+  return runAction(async () => {
+    const viewer = await requireViewer();
+    if (!contriboRewards) return fail("The rewards contract is not configured.");
+    if (!HASH_RE.test(txHash)) return fail("Invalid transaction hash.");
+    const project = await loadOwnedProject(viewer, projectId);
+    if (!project?.onchain_project_id) return fail("Register the project onchain first.");
+
+    const created = (await readBountyCreations(txHash as Hex)).filter(
+      (event) => event.projectId.toString() === project.onchain_project_id,
+    );
+    if (created.length === 0) return fail("No bounty for this project was created in that transaction.");
+    const rows = created.slice(0, titles.length).map((event, index) => ({
+      bounty_id: event.bountyId.toString(),
+      project_id: projectId,
+      title: titles[index].trim().slice(0, 120) || `Bounty #${event.bountyId}`,
+      tx_hash: txHash,
+    }));
+    const { error } = await requireAdmin().from("bounty_details").upsert(rows);
+    if (error) return fail("Bounty created, but its title could not be saved.");
     return ok();
   });
 }

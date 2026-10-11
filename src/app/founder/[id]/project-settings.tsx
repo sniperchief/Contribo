@@ -14,9 +14,11 @@ export function ProjectSettings({ project }: { project: Tables<"projects"> }) {
     project.status === "published"
       ? [
           { status: "draft", label: "Unpublish" },
-          { status: "archived", label: "Archive" },
+          { status: "archived", label: "End project" },
         ]
-      : [{ status: "published", label: "Publish project" }];
+      : project.status === "archived"
+        ? [{ status: "published", label: "Reopen project" }]
+        : [{ status: "published", label: "Publish project" }];
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,7 +54,7 @@ export function ProjectSettings({ project }: { project: Tables<"projects"> }) {
               disabled={status.pending}
               onClick={() => status.run(() => setProjectStatus(project.id, option.status))}
             >
-              {option.label === "Archive" ? "Archive project" : option.label}
+              {option.label}
             </Button>
           ))}
           <FormMessage {...details.message} />

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AuthStatus, AuthStatusFallback } from "@/components/auth/auth-status";
 import { getCurrentProfile } from "@/lib/supabase/server";
-import { HeaderForPath, HeaderShell } from "./header-shell";
+import { HeaderForPath, HeaderShell, type HeaderSession } from "./header-shell";
 
 export function SiteHeader() {
   return (
@@ -14,10 +14,16 @@ export function SiteHeader() {
 /** Reads the session once: the account area and whether app navigation is unlocked (signed up and onboarded). */
 async function SessionHeader() {
   const profile = await getCurrentProfile();
-  const props = {
-    account: <AuthStatus profile={profile} />,
-    session: { signedIn: !!profile, onboarded: !!profile?.onboarded },
+  const session: HeaderSession = {
+    onboarded: !!profile?.onboarded,
+    user: profile && {
+      label: profile.githubLogin ? `@${profile.githubLogin}` : (profile.display_name ?? profile.username ?? "Account"),
+      avatarUrl: profile.avatar_url,
+      verified: !!profile.githubLogin,
+      walletLinked: profile.walletLinked,
+    },
   };
+  const props = { account: <AuthStatus profile={profile} />, session };
   return (
     <Suspense fallback={<HeaderShell {...props} pathname={null} />}>
       <HeaderForPath {...props} />
