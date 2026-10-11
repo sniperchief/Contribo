@@ -1,18 +1,26 @@
 import { Suspense } from "react";
 import { AuthStatus, AuthStatusFallback } from "@/components/auth/auth-status";
+import { getCurrentProfile } from "@/lib/supabase/server";
 import { HeaderForPath, HeaderShell } from "./header-shell";
 
 export function SiteHeader() {
-  const slots = {
-    account: (
-      <Suspense fallback={<AuthStatusFallback />}>
-        <AuthStatus />
-      </Suspense>
-    ),
+  return (
+    <Suspense fallback={<HeaderShell account={<AuthStatusFallback />} session={null} pathname={null} />}>
+      <SessionHeader />
+    </Suspense>
+  );
+}
+
+/** Reads the session once: the account area and whether app navigation is unlocked (signed up and onboarded). */
+async function SessionHeader() {
+  const profile = await getCurrentProfile();
+  const props = {
+    account: <AuthStatus profile={profile} />,
+    session: { signedIn: !!profile, onboarded: !!profile?.onboarded },
   };
   return (
-    <Suspense fallback={<HeaderShell {...slots} pathname={null} />}>
-      <HeaderForPath {...slots} />
+    <Suspense fallback={<HeaderShell {...props} pathname={null} />}>
+      <HeaderForPath {...props} />
     </Suspense>
   );
 }

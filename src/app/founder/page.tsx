@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { getViewer } from "@/lib/server/viewer";
 import { CreateProjectForm } from "./create-project-form";
 
-export const metadata: Metadata = { title: "Founder console" };
+export const metadata: Metadata = { title: "My projects" };
 
 const steps = [
   { label: "Verify your repos", tint: "bg-sky" },
@@ -26,7 +26,7 @@ export default function FounderPage() {
       <section className="pt-14 pb-10">
         <Container className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex max-w-[680px] flex-col gap-3.5">
-            <Eyebrow>Founder console</Eyebrow>
+            <Eyebrow>Founder</Eyebrow>
             <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">Your projects</h1>
             <p className="text-body-lg text-deep-teal">
               Connect repositories, publish reward terms, register the project onchain, fund it, and review contributions.

@@ -47,9 +47,11 @@ export async function getCurrentProfile() {
   const userId = claims?.claims.sub;
   if (!userId) return null;
 
-  const [{ data: profile }, { data: github }] = await Promise.all([
+  const [{ data: profile }, { data: github }, onboarding] = await Promise.all([
     supabase.from("profiles").select("id, username, display_name, avatar_url, wallet_address, wallet_verified_at").eq("id", userId).maybeSingle(),
     supabase.from("github_identities").select("github_login, avatar_url").eq("user_id", userId).maybeSingle(),
+    // Separate query: if the onboarding migration is not applied yet, treat everyone as onboarded.
+    supabase.from("profiles").select("onboarded_at").eq("id", userId).maybeSingle(),
   ]);
   if (!profile) return null;
 
@@ -57,6 +59,7 @@ export async function getCurrentProfile() {
     ...profile,
     githubLogin: github?.github_login ?? null,
     walletLinked: !!(profile.wallet_address && profile.wallet_verified_at),
+    onboarded: onboarding.error ? true : !!onboarding.data?.onboarded_at,
     avatar_url: profile.avatar_url ?? github?.avatar_url ?? null,
   };
 }

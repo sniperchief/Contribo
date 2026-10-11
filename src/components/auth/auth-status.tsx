@@ -1,24 +1,19 @@
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/button";
-import { getCurrentProfile } from "@/lib/supabase/server";
+import { cn } from "@/lib/cn";
 import { AccountMenu } from "./account-menu";
 
-/** Header account area. Reads the session, so render it inside `<Suspense>`. */
-export async function AuthStatus() {
-  const profile = await getCurrentProfile();
+type CurrentProfile = {
+  githubLogin: string | null;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  walletLinked: boolean;
+};
 
-  if (!profile) {
-    return (
-      <div className="flex items-center gap-6">
-        <Link href="/login" className="hidden py-2.5 text-base font-medium text-ink sm:inline">
-          Login
-        </Link>
-        <Link href="/login" className={buttonStyles({ size: "md" })}>
-          Get started
-        </Link>
-      </div>
-    );
-  }
+/** Header account area for a loaded session: the account menu, or sign-in links when signed out. */
+export function AuthStatus({ profile }: { profile: CurrentProfile | null }) {
+  if (!profile) return <SignedOutActions className="hidden md:flex" />;
 
   return (
     <AccountMenu
@@ -30,6 +25,32 @@ export async function AuthStatus() {
   );
 }
 
+/** Login and Get started links. */
+export function SignedOutActions({ className, stacked = false }: { className?: string; stacked?: boolean }) {
+  if (stacked) {
+    return (
+      <div className={cn("flex flex-col gap-3", className)}>
+        <Link href="/login" className={buttonStyles({ size: "lg", className: "w-full" })}>
+          Get started
+        </Link>
+        <Link href="/login" className={buttonStyles({ variant: "secondary", tone: "plum", size: "lg", className: "w-full" })}>
+          Login
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className={cn("items-center gap-6", className)}>
+      <Link href="/login" className="py-2.5 text-base font-medium text-ink">
+        Login
+      </Link>
+      <Link href="/login" className={buttonStyles({ size: "md" })}>
+        Get started
+      </Link>
+    </div>
+  );
+}
+
 export function AuthStatusFallback() {
-  return <span className="h-11 w-40 animate-pulse rounded-full bg-mist" aria-hidden />;
+  return <span className="h-11 w-11 animate-pulse rounded-full bg-mist md:w-40" aria-hidden />;
 }

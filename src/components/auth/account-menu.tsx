@@ -47,9 +47,9 @@ export function AccountMenu({ githubLogin, displayName, avatarUrl, walletLinked 
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={walletLinked ? undefined : `${label}: payout wallet not linked`}
+        aria-label={walletLinked ? label : `${label}: payout wallet not linked`}
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-11 items-center gap-2.5 rounded-full bg-mist py-1 pr-3.5 pl-1 text-[15px] font-bold text-ink hover:bg-sky/40"
+        className="relative flex h-11 items-center gap-2.5 rounded-full bg-mist p-1 sm:pr-3.5 text-[15px] font-bold text-ink hover:bg-sky/40"
       >
         {!walletLinked && <span aria-hidden className="absolute top-0.5 left-8 size-3 rounded-full border-2 border-mist bg-terracotta" />}
         {avatarUrl ? (
@@ -57,9 +57,10 @@ export function AccountMenu({ githubLogin, displayName, avatarUrl, walletLinked 
         ) : (
           <span className="grid size-9 place-items-center rounded-full bg-lavender text-sm">{label.replace("@", "").charAt(0).toUpperCase()}</span>
         )}
-        <span className="max-w-36 truncate">{label}</span>
-        {githubLogin && <VerifiedBadge />}
-        <svg aria-hidden viewBox="0 0 20 20" className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}>
+        {/* Phones show the avatar only, leaving room for the menu button. */}
+        <span className="hidden max-w-36 truncate sm:inline">{label}</span>
+        {githubLogin && <VerifiedBadge className="hidden sm:block" />}
+        <svg aria-hidden viewBox="0 0 20 20" className={`hidden size-4 transition-transform sm:block ${open ? "rotate-180" : ""}`}>
           <path fill="currentColor" d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z" />
         </svg>
       </button>

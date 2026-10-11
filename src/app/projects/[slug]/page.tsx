@@ -319,7 +319,7 @@ async function ContributePanel({
             ))}
           </ul>
           <Link href="/dashboard" className={buttonStyles({ variant: "ghost", arrow: true, className: "gap-2 self-start" })}>
-            Track rewards and claims in your dashboard
+            Track rewards and claims in Contributions
           </Link>
         </div>
       )}

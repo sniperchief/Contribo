@@ -10,9 +10,9 @@ const columns = [
   {
     title: "Platform",
     links: [
-      { href: "/projects", label: "Projects" },
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/founder", label: "Founder console" },
+      { href: "/projects", label: "Explore" },
+      { href: "/dashboard", label: "Contributions" },
+      { href: "/founder", label: "My projects" },
     ],
   },
   {

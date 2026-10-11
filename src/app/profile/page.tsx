@@ -136,7 +136,7 @@ async function ProfileContent() {
                       Payout wallet <strong className="font-mono text-ink">{shortAddress(viewer.wallet)}</strong>
                     </span>
                   ) : (
-                    <Link href="/dashboard" className="font-medium text-ink underline underline-offset-2">
+                    <Link href="#wallet" className="font-medium text-ink underline underline-offset-2">
                       Link a payout wallet
                     </Link>
                   )}
@@ -164,7 +164,7 @@ async function ProfileContent() {
                 <Eyebrow>Primary role</Eyebrow>
                 <h2 className="text-heading-sm">Where you start</h2>
                 <p className="text-base text-deep-teal">
-                  Contributors land on the dashboard, founders on the founder console. You can always use both.
+                  Contributors land on Contributions, founders on My projects. You can always use both.
                 </p>
               </div>
               <RoleSwitch role={isPrimaryRole(profile?.primary_role) ? profile.primary_role : null} />

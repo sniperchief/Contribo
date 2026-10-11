@@ -115,6 +115,8 @@
   --animate-drift: drift var(--float-duration, 11s) ease-in-out infinite;
   /* Entrance for card groups; pair with a per-item animation-delay for a stagger. */
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  /* Full-screen phone menu opening. */
+  --animate-menu-in: menu-in 0.25s ease-out both;
   /* Springy easing with a small overshoot: a single "bounce" on hover lifts. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -122,6 +124,17 @@
     from {
       opacity: 0;
       transform: translate3d(0, 24px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -12px, 0);
     }
     to {
       opacity: 1;
