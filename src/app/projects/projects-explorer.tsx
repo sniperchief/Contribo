@@ -7,6 +7,11 @@ import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
+import { formatAmount } from "@/lib/format";
+import { compareAssetAmountsDesc } from "@/lib/transparency";
+
+/** An amount in one project's own reward asset, read onchain. Base units as a decimal string. */
+export type ExplorerAmount = { asset: string; symbol: string; decimals: number; amount: string };
 
 export type ExplorerProject = {
   id: string;
@@ -18,8 +23,10 @@ export type ExplorerProject = {
   repoCount: number;
   repoNames: string[];
   openBounties: number | null;
-  poolAvailable: number | null;
-  poolLabel: string;
+  /** Available for new rewards; null when the chain could not be read. */
+  available: ExplorerAmount | null;
+  /** All-time confirmed payouts. */
+  paid: ExplorerAmount | null;
   contributors: number;
 };
 
@@ -43,7 +50,8 @@ export function ProjectsExplorer({ projects }: { projects: ExplorerProject[] }) 
     });
     return list.sort((a, b) => {
       if (sort === "bounties") return (b.openBounties ?? -1) - (a.openBounties ?? -1);
-      if (sort === "pool") return (b.poolAvailable ?? -1) - (a.poolAvailable ?? -1);
+      // Amounts are compared only within the same token; different tokens are grouped, never compared.
+      if (sort === "pool") return compareAssetAmountsDesc(toAmount(a.available), toAmount(b.available));
       if (sort === "contributors") return b.contributors - a.contributors;
       if (sort === "name") return a.name.localeCompare(b.name);
       return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
@@ -121,7 +129,7 @@ export function ProjectsExplorer({ projects }: { projects: ExplorerProject[] }) 
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { label: "Open bounties", value: p.openBounties ?? "—", tint: "bg-terracotta/15" },
-                  { label: "Pool available", value: p.poolLabel, tint: "bg-sky/25" },
+                  { label: "Available", value: p.available ? formatAmount(p.available.amount, p.available.decimals, p.available.symbol) : "—", tint: "bg-sky/25" },
                   { label: "Contributors", value: p.contributors, tint: "bg-sky/25" },
                 ].map((stat) => (
                   <div key={stat.label} className={cn("min-w-0 rounded-badge px-3 py-4 sm:px-5 sm:py-5", stat.tint)}>
@@ -164,4 +172,8 @@ export function ProjectsExplorer({ projects }: { projects: ExplorerProject[] }) 
       )}
     </div>
   );
+}
+
+function toAmount(value: ExplorerAmount | null) {
+  return value && { ...value, amount: BigInt(value.amount) };
 }

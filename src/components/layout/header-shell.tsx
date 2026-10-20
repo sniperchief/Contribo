@@ -9,6 +9,7 @@ import { VerifiedBadge } from "@/components/auth/verified-badge";
 import { Logo } from "@/components/brand/logo";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/cn";
+import { unreadBadge } from "@/lib/notifications";
 import { isChromeless } from "./chrome-visibility";
 
 type NavLink = { href: string; label: string };
@@ -25,7 +26,13 @@ const appLinks: NavLink[] = [
   { href: "/founder", label: "My projects" },
 ];
 
-type HeaderUser = { label: string; avatarUrl: string | null; verified: boolean; walletLinked: boolean };
+type HeaderUser = {
+  label: string;
+  avatarUrl: string | null;
+  verified: boolean;
+  walletLinked: boolean;
+  unreadNotifications: number;
+};
 
 /** Session state known to the header, or `null` while it is loading. */
 export type HeaderSession = { onboarded: boolean; user: HeaderUser | null } | null;
@@ -101,22 +108,26 @@ export function HeaderShell({
                 })}
               </div>
             )}
+            {session?.user && <NotificationBell count={session.user.unreadNotifications} active={isActive("/notifications")} />}
             {account}
           </div>
 
           {session && (
-            <button
-              type="button"
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              onClick={() => setMenuOpen(true)}
-              className="grid size-11 place-items-center rounded-full bg-ink text-paper hover:bg-plum lg:hidden"
-            >
-              <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 7h16M4 12h16M4 17h16" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              {session.user && <NotificationBell count={session.user.unreadNotifications} active={isActive("/notifications")} />}
+              <button
+                type="button"
+                aria-label="Open menu"
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu"
+                onClick={() => setMenuOpen(true)}
+                className="grid size-11 place-items-center rounded-full bg-ink text-paper hover:bg-plum"
+              >
+                <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              </button>
+            </div>
           )}
         </nav>
       </Container>
@@ -219,6 +230,14 @@ function MobileMenu({
             <Link href="/profile" onClick={onClose} className={accountLink}>
               View profile
             </Link>
+            <Link href="/notifications" onClick={onClose} className={accountLink}>
+              Notifications
+              {user.unreadNotifications > 0 && (
+                <span className="rounded-badge bg-terracotta px-2.5 py-0.5 text-caption font-bold">
+                  {unreadBadge(user.unreadNotifications)}
+                </span>
+              )}
+            </Link>
             {!user.walletLinked && (
               <Link href="/profile#wallet" onClick={onClose} className={accountLink}>
                 Link payout wallet
@@ -238,6 +257,32 @@ function MobileMenu({
         )}
       </Container>
     </div>
+  );
+}
+
+/** Bell linking to the notification center, with the unread count. */
+function NotificationBell({ count, active }: { count: number; active: boolean }) {
+  const badge = unreadBadge(count);
+  return (
+    <Link
+      href="/notifications"
+      aria-label={badge ? `Notifications, ${count} unread` : "Notifications"}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative grid size-11 shrink-0 place-items-center rounded-full text-ink hover:bg-paper hover:text-ink",
+        active ? "bg-paper" : "bg-paper/60",
+      )}
+    >
+      <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" />
+        <path d="M10.3 20a1.9 1.9 0 0 0 3.4 0" />
+      </svg>
+      {badge && (
+        <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full border-2 border-paper bg-terracotta px-1 text-[11px] leading-none font-bold text-ink">
+          {badge}
+        </span>
+      )}
+    </Link>
   );
 }
 

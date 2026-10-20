@@ -3,18 +3,16 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { StageBadge } from "@/components/contributions/stage-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { ContractUnavailable } from "@/components/tx/contract-unavailable";
+import { RewardTransparency } from "@/components/projects/reward-transparency";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import { BandCard } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { BountyStatusOnchain, contriboRewards } from "@/lib/contracts/config";
 import { contributionStage } from "@/lib/contributions";
-import { formatAmount, formatDate, shortHash } from "@/lib/format";
-import { sameHash } from "@/lib/policy";
-import { readAssetInfo, readOnchainProject, readProjectBounties } from "@/lib/server/chain";
+import { formatDate, shortHash } from "@/lib/format";
 import { createGitHubClient } from "@/lib/server/github";
+import { loadProjectTransparency } from "@/lib/server/transparency";
 import { getViewer, type Viewer } from "@/lib/server/viewer";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/database";
@@ -117,9 +115,12 @@ async function ProjectContent({ params }: { params: Promise<{ slug: string }> })
                   </ul>
                 )}
               </BandCard>
-              <OnchainSummary project={project} publishedHash={published?.policy_hash ?? null} />
             </div>
           </div>
+
+          <Suspense fallback={<p className="rounded-card bg-paper p-9 text-base text-deep-teal">Reading reward funds from Monad…</p>}>
+            <ProjectRewards project={project} publishedHash={published?.policy_hash ?? null} />
+          </Suspense>
 
           {project.status === "published" && (
             <ContributePanel viewer={viewer} project={project} repos={repos} hasPolicy={!!published} />
@@ -162,90 +163,39 @@ function RewardTerms({ policy }: { policy: Tables<"reward_policies"> | null }) {
   );
 }
 
-async function loadOnchainSummary(projectId: string, onchainProjectId: string) {
-  try {
-    const id = BigInt(onchainProjectId);
-    const supabase = await createClient();
-    const [onchain, bounties, details] = await Promise.all([
-      readOnchainProject(id),
-      readProjectBounties(id),
-      supabase?.from("bounty_details").select("bounty_id, title").eq("project_id", projectId),
-    ]);
-    if (!onchain) return null;
-    const asset = await readAssetInfo(onchain.asset);
-    const titles = new Map((details?.data ?? []).map((row) => [String(row.bounty_id), row.title]));
-    return {
-      onchain,
-      asset,
-      open: bounties
-        .filter((b) => b.status === BountyStatusOnchain.Open)
-        .map((b) => ({ ...b, title: titles.get(b.id.toString()) ?? null })),
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function OnchainSummary({ project, publishedHash }: { project: Tables<"projects">; publishedHash: string | null }) {
-  const data = contriboRewards && project.onchain_project_id ? await loadOnchainSummary(project.id, project.onchain_project_id) : null;
-
-  let body: React.ReactNode;
-  let aside: React.ReactNode;
-  if (!contriboRewards) {
-    body = <ContractUnavailable />;
-  } else if (!project.onchain_project_id) {
-    body = <p className="text-base text-deep-teal">Not registered onchain yet, so no rewards can be funded or paid.</p>;
-  } else if (!data) {
-    body = <p className="text-base text-danger">Could not read onchain data from the Monad RPC. Try again shortly.</p>;
-  } else {
-    const { onchain, asset, open } = data;
-    const fmt = (v: bigint) => formatAmount(v, asset.decimals, asset.symbol);
-    const tiles = [
-      { label: "Available", value: fmt(onchain.balances.available), className: "bg-fog", labelClass: "text-deep-teal" },
-      { label: "In open bounties", value: fmt(onchain.balances.escrowed), className: "bg-cream", labelClass: "text-graphite" },
-      { label: "Owed to contributors", value: fmt(onchain.balances.committed), className: "bg-lavender", labelClass: "text-plum" },
-      { label: "Paid out", value: fmt(onchain.balances.totalPaid), className: "bg-sky", labelClass: "text-deep-teal" },
-    ];
-    aside = sameHash(publishedHash, onchain.policyHash) ? (
-      <Badge tone="lavender">Matches published terms</Badge>
-    ) : (
-      <Badge tone="cream">Policy hash differs</Badge>
-    );
-    body = (
-      <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-3">
-          {tiles.map((tile) => (
-            <div key={tile.label} className={`flex flex-col gap-1.5 rounded-badge px-4 py-3.5 ${tile.className}`}>
-              <p className={`text-caption font-medium ${tile.labelClass}`}>{tile.label}</p>
-              <p className="text-body-lg font-bold tracking-[-0.02em]">{tile.value}</p>
-            </div>
-          ))}
-        </div>
-        {open.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-base font-bold">Open bounties</p>
-            <ul className="overflow-hidden rounded-badge border border-mist">
-              {open.map((b) => (
-                <li key={b.id.toString()} className="flex items-center justify-between gap-3 border-b border-mist px-4 py-3 last:border-b-0">
-                  <span className="text-sm">
-                    <span className="font-bold">{b.title ?? `Bounty #${b.id.toString()}`}</span>
-                    <span className="text-deep-teal"> · until {formatDate(new Date(Number(b.deadline) * 1000).toISOString())}</span>
-                  </span>
-                  <Badge tone="terracotta">{fmt(b.amount)}</Badge>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <p className="text-caption text-deep-teal">Read live from the ContriboRewards contract.</p>
-      </div>
-    );
-  }
-  return (
-    <BandCard tone="plum" label="Onchain rewards" aside={aside}>
-      {body}
-    </BandCard>
+/** Onchain-approved contributions name the payout rows; the contract decides their state. */
+async function ProjectRewards({ project, publishedHash }: { project: Tables<"projects">; publishedHash: string | null }) {
+  const supabase = await createClient();
+  const [records, titles] = supabase
+    ? await Promise.all([
+        supabase
+          .from("contributions")
+          .select("id, onchain_ref, pr_title, pr_number, pr_url, github_login, claim_tx_hash, claimed_at")
+          .eq("project_id", project.id)
+          .not("approved_onchain_at", "is", null)
+          .not("onchain_ref", "is", null)
+          .limit(500),
+        supabase.from("bounty_details").select("bounty_id, title").eq("project_id", project.id),
+      ])
+    : [null, null];
+  const data = await loadProjectTransparency(
+    project,
+    {
+      records: (records?.data ?? []).map((c) => ({
+        id: c.id,
+        ref: c.onchain_ref!,
+        prTitle: c.pr_title,
+        prNumber: c.pr_number,
+        prUrl: c.pr_url,
+        githubLogin: c.github_login,
+        claimTxHash: c.claim_tx_hash,
+        claimedAt: c.claimed_at,
+      })),
+      bountyTitles: new Map((titles?.data ?? []).map((row) => [String(row.bounty_id), row.title])),
+    },
+    supabase,
   );
+  return <RewardTransparency data={data} onchainProjectId={project.onchain_project_id} publishedHash={publishedHash} />;
 }
 
 async function ContributePanel({

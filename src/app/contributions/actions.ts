@@ -5,13 +5,12 @@ import { fail, HASH_RE, isUniqueViolation, ok, type ActionResult } from "@/lib/a
 import { contriboRewards } from "@/lib/contracts/config";
 import { checkPullRequestEvidence, parsePullRequestUrl, selectPolicyInForce } from "@/lib/github/verification";
 import { activeChain } from "@/lib/monad/chains";
-import { canReviewContributions, reconcileContribution } from "@/lib/rules";
+import { canReviewContributions, planContributionSync, reconcileContribution } from "@/lib/rules";
 import { createAdminClient } from "@/lib/server/admin";
 import { readContribution, txEmittedContributionEvent, verifyWalletSignature } from "@/lib/server/chain";
 import { createGitHubClient } from "@/lib/server/github";
 import { runAction } from "@/lib/server/run-action";
 import { getProjectAccess, requireViewer } from "@/lib/server/viewer";
-import type { TablesUpdate } from "@/types/database";
 import { checkWalletLinkMessage } from "@/lib/wallet/link-message";
 
 function requireAdmin() {
@@ -56,9 +55,27 @@ export async function submitPullRequest(projectId: string, prUrl: string): Promi
         r.github_owner.toLowerCase() === parsed.owner.toLowerCase() &&
         r.github_name.toLowerCase() === parsed.name.toLowerCase(),
     );
-    if (!repo?.github_repo_id) return fail("That repository is not a verified repository of this project.");
+    const github = createGitHubClient();
+    if (!repo?.github_repo_id) {
+      const verified = (repos ?? []).filter((r) => r.verified_at && r.github_repo_id);
+      const names = verified.map((r) => `${r.github_owner}/${r.github_name}`).join(", ");
+      // A common mistake: opening (and merging) the pull request inside the contributor's own fork.
+      const target = await github.getRepo(parsed.owner, parsed.name).catch(() => null);
+      const upstream = target?.fork && target.parent && verified.find((r) => r.github_repo_id === target.parent!.id);
+      if (upstream) {
+        return fail(
+          `This pull request was opened in your fork (${parsed.owner}/${parsed.name}), not in the project's repository. ` +
+            `Open a pull request from your fork into ${upstream.github_owner}/${upstream.github_name}, wait for the project to merge it, then submit that link.`,
+        );
+      }
+      return fail(
+        names
+          ? `This pull request isn't in one of this project's repositories (${names}).`
+          : "This project has no verified repository yet.",
+      );
+    }
 
-    const pull = await createGitHubClient().getPull(parsed.owner, parsed.name, parsed.number);
+    const pull = await github.getPull(parsed.owner, parsed.name, parsed.number);
     if (!pull) return fail("Pull request not found on GitHub.");
 
     const evidence = checkPullRequestEvidence({
@@ -172,21 +189,32 @@ export async function syncContribution(
       return fail(result.reason);
     }
 
-    const now = new Date().toISOString();
-    const update: TablesUpdate<"contributions"> = {};
-    if (result.approved && !c.approved_onchain_at) update.approved_onchain_at = now;
-    if (result.claimed && !c.claimed_at) update.claimed_at = now;
-    if (txHash && result.approved && !c.approval_tx_hash &&
-        (await txEmittedContributionEvent(txHash as Hex, "ContributionApproved", projectId, ref))) {
-      update.approval_tx_hash = txHash;
-    }
-    if (txHash && result.claimed && !c.claim_tx_hash &&
-        (await txEmittedContributionEvent(txHash as Hex, "RewardClaimed", projectId, ref))) {
-      update.claim_tx_hash = txHash;
-    }
+    // Receipts are checked only for hashes that could still be recorded.
+    const txEmitted = {
+      approval: !!txHash && result.approved && !c.approval_tx_hash &&
+        (await txEmittedContributionEvent(txHash as Hex, "ContributionApproved", projectId, ref)),
+      claim: !!txHash && result.claimed && !c.claim_tx_hash &&
+        (await txEmittedContributionEvent(txHash as Hex, "RewardClaimed", projectId, ref)),
+    };
+    const update = planContributionSync({
+      stored: {
+        approvedOnchainAt: c.approved_onchain_at,
+        claimedAt: c.claimed_at,
+        approvalTxHash: c.approval_tx_hash,
+        claimTxHash: c.claim_tx_hash,
+      },
+      reconciled: result,
+      txHash: txHash ?? null,
+      txEmitted,
+      now: new Date().toISOString(),
+    });
 
     if (Object.keys(update).length > 0) {
-      const { error } = await admin.from("contributions").update(update).eq("id", c.id);
+      // Conditional on the stored values we read, so concurrent syncs cannot record a stage twice.
+      let query = admin.from("contributions").update(update).eq("id", c.id);
+      if (update.approved_onchain_at) query = query.is("approved_onchain_at", null);
+      if (update.claimed_at) query = query.is("claimed_at", null);
+      const { error } = await query;
       if (error) return fail("Could not save the onchain status.");
     }
     return ok({ approved: result.approved, claimed: result.claimed });

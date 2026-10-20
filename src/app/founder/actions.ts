@@ -457,7 +457,10 @@ export async function rejectContribution(contributionId: string): Promise<Action
     const { error } = await admin
       .from("contributions")
       .update({ status: "rejected", reward_amount: null, bounty_id: null, onchain_ref: null })
-      .eq("id", contribution.id);
+      .eq("id", contribution.id)
+      // Never reject a reward that was approved onchain in the meantime.
+      .in("status", ["verified", "accepted"])
+      .is("approved_onchain_at", null);
     if (error) return fail("Could not reject the contribution.");
     return ok();
   });

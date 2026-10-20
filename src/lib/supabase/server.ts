@@ -47,11 +47,13 @@ export async function getCurrentProfile() {
   const userId = claims?.claims.sub;
   if (!userId) return null;
 
-  const [{ data: profile }, { data: github }, onboarding] = await Promise.all([
+  const [{ data: profile }, { data: github }, onboarding, unread] = await Promise.all([
     supabase.from("profiles").select("id, username, display_name, avatar_url, wallet_address, wallet_verified_at").eq("id", userId).maybeSingle(),
     supabase.from("github_identities").select("github_login, avatar_url").eq("user_id", userId).maybeSingle(),
     // Separate query: if the onboarding migration is not applied yet, treat everyone as onboarded.
     supabase.from("profiles").select("onboarded_at").eq("id", userId).maybeSingle(),
+    // Row Level Security counts only the user's own notifications.
+    supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
   ]);
   if (!profile) return null;
 
@@ -60,6 +62,8 @@ export async function getCurrentProfile() {
     githubLogin: github?.github_login ?? null,
     walletLinked: !!(profile.wallet_address && profile.wallet_verified_at),
     onboarded: onboarding.error ? true : !!onboarding.data?.onboarded_at,
+    // Zero if the notifications migration is not applied yet.
+    unreadNotifications: unread.error ? 0 : (unread.count ?? 0),
     avatar_url: profile.avatar_url ?? github?.avatar_url ?? null,
   };
 }

@@ -21,6 +21,7 @@ async function SessionHeader() {
       avatarUrl: profile.avatar_url,
       verified: !!profile.githubLogin,
       walletLinked: profile.walletLinked,
+      unreadNotifications: profile.unreadNotifications,
     },
   };
   const props = { account: <AuthStatus profile={profile} />, session };

@@ -18,6 +18,7 @@ import { contriboRewards } from "@/lib/contracts/config";
 import type { ContributionStage } from "@/lib/contributions";
 import { formatAmount, formatDate, shortAddress } from "@/lib/format";
 import { activeChain } from "@/lib/monad/chains";
+import { contributionAnchor } from "@/lib/notifications";
 import type { BountyRow } from "./onchain-panel";
 import { useServerAction } from "./use-action";
 
@@ -60,7 +61,10 @@ function ReviewItem({ row, asset, openBounties, onchainReady }: Omit<Props, "row
   const fmt = (v: string) => (asset ? formatAmount(v, asset.decimals, asset.symbol) : `${v} (base units)`);
 
   return (
-    <li className="flex flex-col gap-3.5 rounded-badge border border-mist px-6 py-5">
+    <li
+      id={contributionAnchor(row.id)}
+      className="flex scroll-mt-28 flex-col gap-3.5 rounded-badge border border-mist px-6 py-5 target:border-plum target:outline-2 target:outline-plum"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <a href={row.prUrl} target="_blank" rel="noreferrer" className="block truncate text-base font-bold text-ink">

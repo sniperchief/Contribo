@@ -21,3 +21,18 @@ export function explorerAddressUrl(address: string): string | undefined {
   const explorer = activeChain.blockExplorers?.default;
   return explorer ? `${explorer.url}/address/${address}` : undefined;
 }
+
+export function explorerTxUrl(hash: string): string | undefined {
+  const explorer = activeChain.blockExplorers?.default;
+  return explorer ? `${explorer.url}/tx/${hash}` : undefined;
+}
+
+export function explorerBlockUrl(blockNumber: bigint | string): string | undefined {
+  const explorer = activeChain.blockExplorers?.default;
+  return explorer ? `${explorer.url}/block/${blockNumber}` : undefined;
+}
+
+/** Sourcify's check that the deployed bytecode matches the published source ("perfect" = exact match). */
+export function sourcifyCheckUrl(address: string): string {
+  return `https://sourcify-api-monad.blockvision.org/check-by-addresses?addresses=${address}&chainIds=${activeChain.id}`;
+}
