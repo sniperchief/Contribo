@@ -20,3 +20,19 @@ export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
+
+/** Date and time in UTC, e.g. "Oct 20, 2026, 14:03:12 UTC". Identical on server and client. */
+export function formatDateTime(value: string | Date | null | undefined): string {
+  if (!value) return "—";
+  const formatted = new Date(value).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC",
+  });
+  return `${formatted} UTC`;
+}

@@ -163,3 +163,40 @@ export function reconcileContribution(input: {
   }
   return { ok: true, approved: true, claimed: onchain.status === ContributionStatusOnchain.Claimed };
 }
+
+export type ContributionSyncUpdate = {
+  approved_onchain_at?: string;
+  claimed_at?: string;
+  approval_tx_hash?: string;
+  claim_tx_hash?: string;
+};
+
+/**
+ * The database update after reading a contribution from the contract. Stages
+ * advance only from contract state: "approved" when the contract records the
+ * approval, "paid" only when it records the claim (a failed or reverted claim
+ * leaves it Approved). A transaction hash is stored only when its successful
+ * receipt emitted the matching event. Already-recorded fields are never
+ * rewritten, so repeated syncs produce an empty update and no new notification.
+ */
+export function planContributionSync(input: {
+  stored: {
+    approvedOnchainAt: string | null;
+    claimedAt: string | null;
+    approvalTxHash: string | null;
+    claimTxHash: string | null;
+  };
+  reconciled: { approved: boolean; claimed: boolean };
+  txHash: string | null;
+  /** Whether `txHash` is a successful transaction that emitted the event for this contribution. */
+  txEmitted: { approval: boolean; claim: boolean };
+  now: string;
+}): ContributionSyncUpdate {
+  const { stored, reconciled, txHash, txEmitted } = input;
+  const update: ContributionSyncUpdate = {};
+  if (reconciled.approved && !stored.approvedOnchainAt) update.approved_onchain_at = input.now;
+  if (reconciled.claimed && !stored.claimedAt) update.claimed_at = input.now;
+  if (txHash && reconciled.approved && !stored.approvalTxHash && txEmitted.approval) update.approval_tx_hash = txHash;
+  if (txHash && reconciled.claimed && !stored.claimTxHash && txEmitted.claim) update.claim_tx_hash = txHash;
+  return update;
+}

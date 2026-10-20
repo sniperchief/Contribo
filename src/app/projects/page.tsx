@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { contriboRewards, isNativeAsset } from "@/lib/contracts/config";
-import { formatAmount } from "@/lib/format";
-import { activeChain } from "@/lib/monad/chains";
-import { readProjectsOverview, type ProjectOverview } from "@/lib/server/chain";
+import { contriboRewards } from "@/lib/contracts/config";
+import { formatAmount, formatDateTime } from "@/lib/format";
+import { readAssetInfo, readProjectsOverview, type AssetInfo } from "@/lib/server/chain";
+import { latestSnapshotTime } from "@/lib/server/transparency";
+import { assetLabels, totalsByAsset, type AssetAmount } from "@/lib/transparency";
 import { createClient } from "@/lib/supabase/server";
-import { ProjectsExplorer, type ExplorerProject } from "./projects-explorer";
+import { ProjectsExplorer, type ExplorerAmount, type ExplorerProject } from "./projects-explorer";
 
 export const metadata: Metadata = { title: "Explore projects" };
 
@@ -43,27 +44,43 @@ async function ProjectList() {
   const { data: projects } = await supabase
     .from("projects")
     .select(
-      "id, slug, name, tagline, published_at, onchain_project_id, onchain_asset, reward_policies(status, reward_asset), project_repositories(github_owner, github_name, verified_at), contributions(github_user_id)",
+      "id, slug, name, tagline, published_at, onchain_project_id, project_repositories(github_owner, github_name, verified_at), contributions(github_user_id)",
     )
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(200);
 
-  let overview = new Map<bigint, ProjectOverview>();
+  // Every figure comes from one contract read at one block; a failed read shows no figures at all.
+  let chain: Awaited<ReturnType<typeof readProjectsOverview>> | null = null;
+  const assets = new Map<string, AssetInfo | null>();
   if (contriboRewards) {
     const ids = (projects ?? []).filter((p) => p.onchain_project_id).map((p) => BigInt(p.onchain_project_id!));
     try {
-      overview = await readProjectsOverview(ids);
-    } catch {
-      // Onchain stats are optional; cards show "—" when the RPC is unavailable.
+      chain = await readProjectsOverview(ids);
+      for (const asset of new Set([...chain.projects.values()].map((o) => o.asset.toLowerCase()))) {
+        // Unreadable token metadata: that token's figures show as unavailable rather than in raw units.
+        assets.set(asset, await readAssetInfo(asset).catch(() => null));
+      }
+    } catch (error) {
+      console.error("Explore: onchain read failed", error);
     }
   }
+  const lastVerifiedAt =
+    contriboRewards && !chain
+      ? await latestSnapshotTime(
+          supabase,
+          (projects ?? []).filter((p) => p.onchain_project_id).map((p) => p.id),
+        ).catch(() => null)
+      : null;
 
   const rows: ExplorerProject[] = (projects ?? []).map((project) => {
-    const policy = project.reward_policies.find((p) => p.status === "published") ?? null;
     const repos = project.project_repositories.filter((r) => r.verified_at);
-    const stats = project.onchain_project_id ? overview.get(BigInt(project.onchain_project_id)) : undefined;
-    const native = isNativeAsset(project.onchain_asset ?? (policy?.reward_asset === "MON" ? null : policy?.reward_asset));
+    const stats = chain && project.onchain_project_id ? chain.projects.get(BigInt(project.onchain_project_id)) : undefined;
+    const info = stats ? assets.get(stats.asset.toLowerCase()) : null;
+    const amount = (value: bigint): ExplorerAmount | null =>
+      stats && info
+        ? { asset: stats.asset.toLowerCase(), symbol: info.symbol, decimals: info.decimals, amount: value.toString() }
+        : null;
     return {
       id: project.id,
       slug: project.slug,
@@ -74,11 +91,51 @@ async function ProjectList() {
       repoCount: repos.length,
       repoNames: repos.map((r) => `${r.github_owner}/${r.github_name}`),
       openBounties: stats?.openBounties ?? null,
-      poolAvailable: stats ? Number(stats.available) : null,
-      poolLabel: stats ? (native ? formatAmount(stats.available, 18, activeChain.nativeCurrency.symbol) : "Token pool") : "—",
+      available: stats ? amount(stats.balances.available) : null,
+      paid: stats ? amount(stats.balances.totalPaid) : null,
       contributors: new Set(project.contributions.map((c) => c.github_user_id)).size,
     };
   });
 
-  return <ProjectsExplorer projects={rows} />;
+  const totals = (key: "available" | "paid") =>
+    totalsByAsset(rows.flatMap((r) => (r[key] ? [{ ...r[key]!, amount: BigInt(r[key]!.amount) }] : [])));
+  const labels = assetLabels(rows.flatMap((r) => (r.available ? [r.available] : [])));
+  const describe = (list: AssetAmount[]) =>
+    list.length === 0
+      ? "—"
+      : list.map((t) => formatAmount(t.amount, t.decimals, labels.get(t.asset) ?? t.symbol)).join(" · ");
+
+  return (
+    <div className="flex flex-col gap-6">
+      {contriboRewards && (
+        <section aria-label="Onchain totals" className="flex flex-col gap-3 rounded-card bg-paper p-5 sm:p-6">
+          {chain ? (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-badge bg-fog px-4 py-3.5">
+                  <p className="text-caption font-medium text-deep-teal">Available for new rewards, across listed projects</p>
+                  <p className="mt-1 text-body-lg font-bold">{describe(totals("available"))}</p>
+                </div>
+                <div className="rounded-badge bg-sky px-4 py-3.5">
+                  <p className="text-caption font-medium text-deep-teal">Confirmed payouts, all time</p>
+                  <p className="mt-1 text-body-lg font-bold">{describe(totals("paid"))}</p>
+                </div>
+              </div>
+              <p className="text-caption text-deep-teal">
+                Read from the ContriboRewards contract at block #{chain.block.number.toString()} (
+                {formatDateTime(new Date(Number(chain.block.timestamp) * 1000))}). Each token is totalled separately.
+                {chain.stale && " The Monad node may be behind, so these figures may not be current."}
+              </p>
+            </>
+          ) : (
+            <p role="status" className="rounded-badge bg-danger-soft px-5 py-3.5 text-sm text-danger">
+              Could not refresh onchain figures from the Monad network, so pool balances are not shown.
+              {lastVerifiedAt ? ` Figures were last verified ${formatDateTime(lastVerifiedAt)}.` : ""}
+            </p>
+          )}
+        </section>
+      )}
+      <ProjectsExplorer projects={rows} />
+    </div>
+  );
 }

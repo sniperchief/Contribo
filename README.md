@@ -6,7 +6,7 @@
 
 A rewards platform for open-source contributors in the Monad ecosystem. Founders lock real funds behind clear reward terms *before* work starts. Contributors ship pull requests, and accepted work is paid out from those funds on Monad.
 
-[**Open the app**](https://trycontribo.vercel.app) · [Explore projects](https://trycontribo.vercel.app/projects) · [Smart contract](#live-deployment) · [Source code](https://github.com/sniperchief/Contribo)
+[**Open the app**](https://trycontribo.vercel.app) · [**Guide for judges**](JUDGES.md) · [Explore projects](https://trycontribo.vercel.app/projects) · [Smart contract](#live-deployment) · [Source code](https://github.com/sniperchief/Contribo)
 
 </div>
 
@@ -130,6 +130,30 @@ After launch, the project page is where you review contributions, add more bount
 
 A verified pull request is **evidence, not payment**. Nothing is paid until a person approves it and the approval is confirmed onchain.
 
+### Notifications
+
+Contribo notifies people in the app (no email or push) when a contribution moves to a new stage:
+
+| Who | When |
+| --- | --- |
+| Contributor | Verified · Accepted · Rejected · Approved onchain (it can be claimed from then on; the contract has no separate "ready to claim" state) · Paid |
+| Project owner | A pull request was verified and is waiting for review |
+
+Notifications are written by a database trigger in the same transaction as the stage change, and only the server can change a contribution's stage, after checking GitHub or the contract. "Approved onchain" and "Paid" are set only after the server reads the approval or claim back from the contract. Each event has a unique key per recipient, so reloads and retries never create a second notification.
+
+### Reward transparency
+
+Each project page shows figures read from ContriboRewards at a single block:
+
+| Figure | Contract field | Meaning |
+| --- | --- | --- |
+| Available for new rewards | `available` | Unallocated funds; the only part the owner can put into new bounties or approvals, or withdraw |
+| Locked in active bounties | `escrowed` | Funds in open bounties; leaves only when a bounty is awarded or cancelled after its deadline |
+| Approved, awaiting claim | `committed` | Reserved for contributors; nobody else can move it |
+| Total paid out | `totalPaid` | All-time claims: a history total, not a balance |
+
+These buckets never overlap: an awarded bounty moves from *escrowed* to *committed*, and a claim from *committed* to *paid out*. Each project uses one token, and totals across projects (on Explore) are kept per token. Payouts are listed only when the contract reports the contribution as claimed; transaction links come from receipts that emitted `RewardClaimed`. If the network can't be read, the page says so and shows the time of the last verified reading instead of presenting old figures as current.
+
 ---
 
 ## Architecture
@@ -166,7 +190,8 @@ Contribo has four parts. Each one is the source of truth for something different
 | --- | --- | --- |
 | [`/`](https://trycontribo.vercel.app) | Everyone | Landing page with live total paid out |
 | [`/projects`](https://trycontribo.vercel.app/projects) (Explore) | Everyone | Browse live projects; search and sort |
-| `/projects/[slug]` | Everyone | Reward terms, verified repositories, live balances and open bounties; contributors submit pull requests here |
+| `/projects/[slug]` | Everyone | Reward terms, verified repositories and **reward transparency** (balances, active bounties and confirmed payouts read from the contract at one block); contributors submit pull requests here |
+| `/notifications` | Signed-in users | Notification center: contribution and reward updates, review requests; the header bell shows the unread count |
 | [`/login`](https://trycontribo.vercel.app/login) | Everyone | Sign in or sign up with GitHub |
 | `/welcome` | New users | Choose contributor or founder, link a wallet (optional) |
 | [`/dashboard`](https://trycontribo.vercel.app/dashboard) (Contributions) | Contributors | Your pull requests by stage, and claims |
@@ -305,6 +330,7 @@ Values starting with `NEXT_PUBLIC_` are built into the app, so restart the dev s
    | 3 | [20261012000000_profile_socials_and_skills.sql](supabase/migrations/20261012000000_profile_socials_and_skills.sql) | Social links and skills on profiles |
    | 4 | [20261013000000_onboarding.sql](supabase/migrations/20261013000000_onboarding.sql) | Contributor or founder role, and onboarding |
    | 5 | [20261014000000_guided_project_setup.sql](supabase/migrations/20261014000000_guided_project_setup.sql) | Saved setup progress, bounty titles, server-only "go live" |
+   | 6 | [20261020000000_notifications_and_chain_snapshots.sql](supabase/migrations/20261020000000_notifications_and_chain_snapshots.sql) | In-app notifications (created by a database trigger), and the last verified onchain reading per project |
 
 3. Copy the project URL, publishable key and secret key into `.env.local`.
 
@@ -321,6 +347,8 @@ Values starting with `NEXT_PUBLIC_` are built into the app, so restart the dev s
 | `contributions` | Pull requests submitted to a project, the reward chosen, and the onchain approval and claim |
 | `project_approvers` | Approver wallets, saved only after the contract confirms them |
 | `bounty_details` | A readable title for each onchain bounty |
+| `notifications` | One row per event and recipient: type, project and contribution, message, read time. Created only by a trigger on `contributions`; a unique dedupe key per recipient makes retries harmless. Recipients can read theirs and mark them read, nothing else |
+| `project_chain_snapshots` | The last successful, consistent read of each project's contract balances, written by the server from its own reads. Shown only as a labelled fallback when a live read fails |
 
 Contributions record the terms that were in force when the pull request was merged, so later changes to the terms never affect earlier work.
 
@@ -390,7 +418,7 @@ npm run typecheck && npm run lint && npm run build
 cd contracts && forge test                # contract tests
 ```
 
-**App tests** ([tests/](tests/), 94 tests) cover:
+**App tests** ([tests/](tests/), 143 tests) cover:
 
 - GitHub identity: only the real author can claim a pull request
 - repository ownership checks, including organizations, other projects' tokens and private repositories
@@ -401,6 +429,8 @@ cd contracts && forge test                # contract tests
 - approval planning and onchain reconciliation
 - transaction states and error messages
 - the project setup rules: reward plans, totals, terms, names and web addresses
+- notifications, against the real migrations in an in-memory Postgres ([PGlite](https://pglite.dev)): every contribution stage, duplicate and retried events, who can read or change notifications, and chain-snapshot rules
+- reward transparency accounting: the contract's books, bounties, payouts, failed claims, stale reads and several tokens
 
 **Contract tests** ([contracts/test/](contracts/test/)) cover:
 
@@ -447,6 +477,7 @@ src/
       new/                Three-step project setup (repository, rewards, launch)
       [id]/               Project management: terms, repositories, funding, bounties, review
     profile/              Profile, wallet, socials and skills
+    notifications/        Notification center and mark-as-read actions
     contributions/        Server actions for submissions, wallet linking and onchain sync
     auth/                 Sign-in callback and sign-out
   components/             Shared interface pieces (header, buttons, badges, wallet, transactions)
@@ -454,6 +485,8 @@ src/
     project-setup.ts      Rules for the setup flow (plans, totals, default terms)
     rules.ts              Who may manage, review and approve
     policy.ts             Terms fingerprinting
+    transparency.ts       Reward accounting from contract state (per token)
+    notifications.ts      Notification labels and in-app links
     github/               GitHub verification rules
     contracts/            Contract interface (generated), address and transaction states
     server/               Server-only code: GitHub client, chain reads, access checks
@@ -481,6 +514,8 @@ design/                   Approved designs and the style reference
 - **Repository checks are one-time.** Losing access to a repository later doesn't unverify it automatically.
 - **Pull-request detection uses GitHub search,** which can lag. You can always paste a pull request link directly.
 - **No withdrawal screen yet.** Founders can withdraw unused funds through the contract's `withdraw` function, but not from the app.
+- **Notifications follow Contribo's records.** A claim made directly on the contract (outside the app) is noticed, and notified, the next time anyone checks that contribution's status. Approvers who are not the project owner don't get review notifications.
+- **Payout history comes from contract state and verified receipts, not a log scan.** The public Monad RPC doesn't allow scanning old event logs, so claims made outside Contribo count in "Total paid out" but appear as an unattributed amount rather than a listed payout.
 
 ---
 

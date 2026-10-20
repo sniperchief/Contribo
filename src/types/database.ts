@@ -11,6 +11,13 @@ export type ProjectStatus = "draft" | "published" | "archived";
 export type RewardPolicyStatus = "draft" | "published" | "retired";
 export type RewardModel = "bounty" | "funding_share" | "hybrid";
 export type ContributionStatus = "submitted" | "verified" | "accepted" | "rejected";
+export type NotificationType =
+  | "contribution_verified"
+  | "contribution_accepted"
+  | "contribution_rejected"
+  | "reward_approved"
+  | "reward_claimed"
+  | "contribution_submitted";
 
 export type Database = {
   __InternalSupabase: {
@@ -377,6 +384,90 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "reward_policies";
             referencedColumns: ["id", "project_id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_id: string;
+          type: NotificationType;
+          project_id: string | null;
+          contribution_id: string | null;
+          message: string;
+          dedupe_key: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        /** Created only by the contributions trigger; never inserted through the API. */
+        Insert: never;
+        /** Recipients may only mark notifications read. */
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_contribution_id_fkey";
+            columns: ["contribution_id"];
+            isOneToOne: false;
+            referencedRelation: "contributions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_chain_snapshots: {
+        Row: {
+          project_id: string;
+          chain_id: number;
+          contract_address: string;
+          onchain_project_id: string;
+          asset: string;
+          asset_symbol: string;
+          asset_decimals: number;
+          available: string;
+          escrowed: string;
+          committed: string;
+          total_deposited: string;
+          total_paid: string;
+          total_withdrawn: string;
+          block_number: string;
+          block_timestamp: string;
+          read_at: string;
+        };
+        /** Written by the server from its own successful contract reads. */
+        Insert: {
+          project_id: string;
+          chain_id: number;
+          contract_address: string;
+          onchain_project_id: string;
+          asset: string;
+          asset_symbol: string;
+          asset_decimals: number;
+          available: string;
+          escrowed: string;
+          committed: string;
+          total_deposited: string;
+          total_paid: string;
+          total_withdrawn: string;
+          block_number: string;
+          block_timestamp: string;
+          read_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "project_chain_snapshots_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: true;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
           },
         ];
       };

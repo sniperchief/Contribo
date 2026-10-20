@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { contriboRewards } from "@/lib/contracts/config";
 import { contributionStage, stageDescriptions, stageLabels, type ContributionStage } from "@/lib/contributions";
 import { formatAmount, formatDate } from "@/lib/format";
+import { contributionAnchor } from "@/lib/notifications";
 import { readAssetInfo, type AssetInfo } from "@/lib/server/chain";
 import { getViewer } from "@/lib/server/viewer";
 
@@ -148,8 +149,9 @@ async function DashboardContent() {
                   return (
                     <li
                       key={c.id}
+                      id={contributionAnchor(c.id)}
                       className={cn(
-                        "flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-mist px-6 py-5 last:border-b-0",
+                        "flex scroll-mt-28 flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-mist px-6 py-5 last:border-b-0 target:outline-2 target:-outline-offset-2 target:outline-plum",
                         c.stage === "approved" ? "bg-lavender/15" : "bg-paper",
                       )}
                     >

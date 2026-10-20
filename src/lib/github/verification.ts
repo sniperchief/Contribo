@@ -12,6 +12,9 @@ export type GitHubRepo = {
   private: boolean;
   default_branch: string;
   owner: { id: number; login: string; type: string };
+  /** Present on forks (GET /repos/{owner}/{repo}). */
+  fork?: boolean;
+  parent?: { id: number; full_name: string };
 };
 
 /** Subset of GET /repos/{owner}/{repo}/pulls/{number}. */
