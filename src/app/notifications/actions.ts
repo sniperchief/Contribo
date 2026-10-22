@@ -1,10 +1,27 @@
 "use server";
 
 import { fail, ok, type ActionResult } from "@/lib/action-result";
+import type { NotificationRow } from "@/lib/notifications";
 import { runAction } from "@/lib/server/run-action";
 import { requireViewer } from "@/lib/server/viewer";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Most recent notifications shown in the header panel; older ones stay stored. */
+const PANEL_LIMIT = 20;
+
+/** The viewer's latest notifications. Row Level Security returns only their own. */
+export async function listNotifications(): Promise<ActionResult<NotificationRow[]>> {
+  return runAction(async () => {
+    const viewer = await requireViewer();
+    const { data, error } = await viewer.supabase
+      .from("notifications")
+      .select("id, type, project_id, contribution_id, message, read_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(PANEL_LIMIT);
+    return error ? fail("Could not load notifications.") : ok((data ?? []) as NotificationRow[]);
+  });
+}
 
 /**
  * Marks notifications read with the viewer's own session. Row Level Security

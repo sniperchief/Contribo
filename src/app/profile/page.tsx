@@ -164,7 +164,7 @@ async function ProfileContent() {
                 <Eyebrow>Primary role</Eyebrow>
                 <h2 className="text-heading-sm">Where you start</h2>
                 <p className="text-base text-deep-teal">
-                  Contributors land on Contributions, founders on My projects. You can always use both.
+                  Contributors land on Contributions, founders on Manage. You can always use both.
                 </p>
               </div>
               <RoleSwitch role={isPrimaryRole(profile?.primary_role) ? profile.primary_role : null} />

@@ -34,7 +34,7 @@ export function SetupWizard({ initial, contractReady }: { initial: SetupState; c
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-5">
         <Link href="/founder" className="self-start text-sm font-medium text-deep-teal hover:text-ink">
-          ← My projects
+          ← Manage
         </Link>
         <h1 className="text-[32px] leading-[1.09] tracking-[-0.02em] sm:text-heading-lg">
           {state.projectId && state.name ? `Set up ${state.name}` : "Create a project"}

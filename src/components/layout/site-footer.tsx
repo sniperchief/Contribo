@@ -12,7 +12,7 @@ const columns = [
     links: [
       { href: "/projects", label: "Explore" },
       { href: "/dashboard", label: "Contributions" },
-      { href: "/founder", label: "My projects" },
+      { href: "/founder", label: "Manage" },
     ],
   },
   {

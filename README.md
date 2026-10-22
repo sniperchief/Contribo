@@ -86,7 +86,7 @@ You don't have to trust this README. Each of these checks takes a minute:
 
 ### For founders: create a project in three steps
 
-From **My projects → + Create a project**:
+From **Manage → + Create a project**:
 
 1. **Repository.** Paste a GitHub link or start typing to search your own repositories. If the repository belongs to your GitHub account, it is verified instantly. For an organization repository, Contribo gives you a small file to add to it, which proves you can manage it.
 2. **Rewards.** Choose **one** reward type:
@@ -103,7 +103,7 @@ From **My projects → + Create a project**:
 
    If anything stops halfway, **Continue launch** picks up exactly where it left off and never repeats a payment.
 
-Your progress is saved after every step. Unfinished projects show **In setup · step X of 3** on My projects.
+Your progress is saved after every step. Unfinished projects show **In setup · step X of 3** on Manage.
 
 After launch, the project page is where you review contributions, add more bounties or funds, and manage approvers (trusted wallets that can approve rewards with you). Projects show **Live** while open and **Ended** once you close them.
 
@@ -191,11 +191,10 @@ Contribo has four parts. Each one is the source of truth for something different
 | [`/`](https://trycontribo.vercel.app) | Everyone | Landing page with live total paid out |
 | [`/projects`](https://trycontribo.vercel.app/projects) (Explore) | Everyone | Browse live projects; search and sort |
 | `/projects/[slug]` | Everyone | Reward terms, verified repositories and **reward transparency** (balances, active bounties and confirmed payouts read from the contract at one block); contributors submit pull requests here |
-| `/notifications` | Signed-in users | Notification center: contribution and reward updates, review requests; the header bell shows the unread count |
 | [`/login`](https://trycontribo.vercel.app/login) | Everyone | Sign in or sign up with GitHub |
 | `/welcome` | New users | Choose contributor or founder, link a wallet (optional) |
 | [`/dashboard`](https://trycontribo.vercel.app/dashboard) (Contributions) | Contributors | Your pull requests by stage, and claims |
-| [`/founder`](https://trycontribo.vercel.app/founder) (My projects) | Founders | Your projects, and their setup progress |
+| [`/founder`](https://trycontribo.vercel.app/founder) (Manage) | Founders | Your projects, and their setup progress |
 | `/founder/new` | Founders | The three-step project setup |
 | `/founder/[id]` | Project owner and approvers | Manage details, repositories, terms, funding, bounties and approvers; review contributions |
 | [`/profile`](https://trycontribo.vercel.app/profile) | Signed-in users | GitHub details, payout wallet, social links and skills |
@@ -473,11 +472,11 @@ src/
     welcome/              Onboarding: role choice and wallet
     projects/             Explore and public project pages; pull-request submission
     dashboard/            Contributions: your pull requests, rewards and claims
-    founder/              My projects
+    founder/              Manage: your projects
       new/                Three-step project setup (repository, rewards, launch)
       [id]/               Project management: terms, repositories, funding, bounties, review
     profile/              Profile, wallet, socials and skills
-    notifications/        Notification center and mark-as-read actions
+    notifications/        Notification list and mark-as-read actions (shown in the header bell panel)
     contributions/        Server actions for submissions, wallet linking and onchain sync
     auth/                 Sign-in callback and sign-out
   components/             Shared interface pieces (header, buttons, badges, wallet, transactions)

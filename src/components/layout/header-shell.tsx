@@ -5,11 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { SignedOutActions } from "@/components/auth/auth-status";
+import { NotificationMenu } from "@/components/notifications/notification-menu";
 import { VerifiedBadge } from "@/components/auth/verified-badge";
 import { Logo } from "@/components/brand/logo";
 import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/cn";
-import { unreadBadge } from "@/lib/notifications";
 import { isChromeless } from "./chrome-visibility";
 
 type NavLink = { href: string; label: string };
@@ -23,7 +23,7 @@ const landingLinks: NavLink[] = [
 const appLinks: NavLink[] = [
   { href: "/projects", label: "Explore" },
   { href: "/dashboard", label: "Contributions" },
-  { href: "/founder", label: "My projects" },
+  { href: "/founder", label: "Manage" },
 ];
 
 type HeaderUser = {
@@ -57,6 +57,8 @@ export function HeaderShell({
   const [scrolled, setScrolled] = useState(false);
   const landing = pathname === "/";
   const links = landing ? landingLinks : session?.onboarded ? appLinks : [];
+  // Notifications belong to the app, not the marketing page (and wait until the path is known).
+  const notificationsFor = !landing && pathname !== null ? (session?.user ?? null) : null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -108,13 +110,13 @@ export function HeaderShell({
                 })}
               </div>
             )}
-            {session?.user && <NotificationBell count={session.user.unreadNotifications} active={isActive("/notifications")} />}
+            {notificationsFor && <NotificationMenu count={notificationsFor.unreadNotifications} />}
             {account}
           </div>
 
           {session && (
             <div className="flex items-center gap-2 lg:hidden">
-              {session.user && <NotificationBell count={session.user.unreadNotifications} active={isActive("/notifications")} />}
+              {notificationsFor && <NotificationMenu count={notificationsFor.unreadNotifications} />}
               <button
                 type="button"
                 aria-label="Open menu"
@@ -230,14 +232,6 @@ function MobileMenu({
             <Link href="/profile" onClick={onClose} className={accountLink}>
               View profile
             </Link>
-            <Link href="/notifications" onClick={onClose} className={accountLink}>
-              Notifications
-              {user.unreadNotifications > 0 && (
-                <span className="rounded-badge bg-terracotta px-2.5 py-0.5 text-caption font-bold">
-                  {unreadBadge(user.unreadNotifications)}
-                </span>
-              )}
-            </Link>
             {!user.walletLinked && (
               <Link href="/profile#wallet" onClick={onClose} className={accountLink}>
                 Link payout wallet
@@ -257,32 +251,6 @@ function MobileMenu({
         )}
       </Container>
     </div>
-  );
-}
-
-/** Bell linking to the notification center, with the unread count. */
-function NotificationBell({ count, active }: { count: number; active: boolean }) {
-  const badge = unreadBadge(count);
-  return (
-    <Link
-      href="/notifications"
-      aria-label={badge ? `Notifications, ${count} unread` : "Notifications"}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "relative grid size-11 shrink-0 place-items-center rounded-full text-ink hover:bg-paper hover:text-ink",
-        active ? "bg-paper" : "bg-paper/60",
-      )}
-    >
-      <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" />
-        <path d="M10.3 20a1.9 1.9 0 0 0 3.4 0" />
-      </svg>
-      {badge && (
-        <span className="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full border-2 border-paper bg-terracotta px-1 text-[11px] leading-none font-bold text-ink">
-          {badge}
-        </span>
-      )}
-    </Link>
   );
 }
 
