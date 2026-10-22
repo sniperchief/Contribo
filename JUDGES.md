@@ -54,7 +54,7 @@ Contribo connects two people: a **founder** who funds rewards and a **contributo
 
 1. Go to https://trycontribo.vercel.app and click **Get started → Continue with GitHub**. Sign in with **GitHub account 1**.
 2. On the welcome screen, choose **Founder** and link **wallet A** (you sign a free message; no transaction is sent).
-3. Open **My projects → + Create a project**.
+3. Open **Manage → + Create a project**.
 4. **Step 1, Repository:** start typing `contribo-test` and pick it. It shows **✓ Verified** because it's yours. Edit the name or tagline if you like, then click **Continue**.
 5. **Step 2, Rewards:** choose **Bounties**, add one bounty (e.g. *"Improve the README"*, `1` MON, 7 days), then click **Continue**.
 6. **Step 3, Launch:** review the summary and click **Launch project**. Approve the 3 wallet requests (register, deposit, create bounty) and watch the checklist tick off.
@@ -77,7 +77,7 @@ Contribo connects two people: a **founder** who funds rewards and a **contributo
 
 ### Part E: review and pay (founder, browser profile 1)
 
-14. Open **My projects → your project → Review contributions**. Accept the pull request for the bounty.
+14. Open **Manage → your project → Review contributions**. Accept the pull request for the bounty.
 15. Click **Approve onchain** and confirm in **wallet A**. The reward is now reserved for the contributor in the contract, and nobody can take it back.
 
 ### Part F: claim (contributor, browser profile 2)

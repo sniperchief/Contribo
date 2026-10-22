@@ -8,7 +8,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { setupStep } from "@/lib/project-setup";
 import { getViewer } from "@/lib/server/viewer";
 
-export const metadata: Metadata = { title: "My projects" };
+export const metadata: Metadata = { title: "Manage" };
 
 export default function FounderPage() {
   return (
